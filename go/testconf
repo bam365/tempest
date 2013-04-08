@@ -1,0 +1,14 @@
+{
+        "sensors": {
+                "Pot": { 
+                        "file": "s1.dat",
+                        "range": {"lo": 0, "hi": 100},
+                        "alert": {"lo": 5, "hi": 95}
+                },
+                "Column": {
+                        "file": "s2.dat",
+                        "range": {"lo": 0, "hi": 100},
+                        "alert": {"lo": 5, "hi": 95}
+                }
+        }
+}
