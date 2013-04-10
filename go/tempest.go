@@ -18,6 +18,9 @@ import (
 )
 
 
+const RunHistFile = "runhist.csv"
+
+
 func JsonStr(v interface{}) string {
         b, _ := json.MarshalIndent(v, "", "\t")
         return string(b)
@@ -29,7 +32,13 @@ func Alert(sname, msg string) {
 }
 
 
-func AlerterProc(c conf.TempestConf, tmr <-chan time.Time) {
+func IntervalTicker(interval int) <-chan time.Time {
+        return time.Tick(time.Duration(interval) * time.Second)
+}
+
+
+func AlerterProc(c conf.TempestConf) {
+        tmr := IntervalTicker(c.AlertInterval)
         alertmsg := func(arange conf.SensorRange, sdat sensors.SensorReading) string {
                 msg := ""
                 if sdat.Err != "" {
@@ -58,12 +67,30 @@ func AlerterProc(c conf.TempestConf, tmr <-chan time.Time) {
 }
 
 
+func HistRecorderProc(c conf.TempestConf, hist HistFile) {
+        tmr := IntervalTicker(c.HistInterval)
+        writerec := func (t int) { 
+                readings := sensors.ReadSensors(c.Sensors)
+                if err := hist.Write(readings.ToCSVRecord(t)); err != nil {
+                        fmt.Printf("ERROR: %s", err.Error())
+                }
+        }
+        tbegin := time.Now()
+        writerec(0)
+        for now := range(tmr) {
+                writerec(int(now.Sub(tbegin).Seconds())) 
+        }
+}
+
+
+
 func main() {
         if conf, err := conf.LoadConf("testconf"); err != nil {
                 fmt.Printf("Error loading conf: %s\n", err)
         } else {
                 fmt.Println(JsonStr(conf.Sensors))
-                AlerterProc(conf, time.Tick(5 * time.Second))
+                go HistRecorderProc(conf, OpenHistFile(RunHistFile))
+                AlerterProc(conf)
         }
 }
 

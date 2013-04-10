@@ -30,12 +30,19 @@ type (
         TempestConf struct {
                 Sensors SensorConf `json:"sensors"`
                 Emails []string    `json:"emails"`
+                AlertInterval int  `json:"alertdelay"`
+                HistInterval int  `json:"histdelay"`
         }
 )
 
 
 func NewTempestConf() TempestConf {
-        return TempestConf{ make(map[string]SensorData) }
+        return TempestConf { 
+                Sensors: make(map[string]SensorData), 
+                Emails: make([]string, 0),
+                AlertInterval: 60,
+                HistInterval: 60,
+        }
 }
 
 

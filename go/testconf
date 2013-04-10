@@ -10,5 +10,7 @@
                         "range": {"lo": 0, "hi": 100},
                         "alert": {"lo": 5, "hi": 95}
                 }
-        }
+        },
+        "alertdelay": 5,
+        "histdelay": 60
 }
