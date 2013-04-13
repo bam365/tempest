@@ -13,7 +13,7 @@ import (
 
 
 import (
-        "../conf"
+        "../config"
 )
 
 
@@ -31,7 +31,7 @@ type (
 )
 
 
-func ReadSensors(sensors conf.SensorConf) SensorReadings {
+func ReadSensors(sensors config.SensorConf) SensorReadings {
         ret := make(map[string]SensorReading)
         for sname, sdat := range(sensors) {
                ret[sname] = ReadSensor(sdat.File)

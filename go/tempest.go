@@ -1,4 +1,4 @@
-/* tempest.go - Web server for tempest
+/* tempest.go - Tempest data run operations 
  * Copyright (C) 2013  Blake Mitchell 
  */
 
@@ -7,39 +7,88 @@ package main
 
 import (
         "fmt"
-        //"net/http"
-        "encoding/json"
         "time"
+        "errors"
+        "os"
 )
 
 import (
-        "./conf"
+        "./config"
         "./sensors"
 )
 
 
-const RunHistFile = "runhist.csv"
+const DefaultRunHistFile = "runhist.csv"
 
 
-func JsonStr(v interface{}) string {
-        b, _ := json.MarshalIndent(v, "", "\t")
-        return string(b)
+type TempestRun struct {
+        filename string
+        histfile HistFile
+        conf     config.TempestConf
+        start    time.Time
+        stop     chan bool 
+        err      chan string
 }
 
 
-func Alert(sname, msg string) {
-        fmt.Printf("ALERT: %s sensor: %s\n", sname, msg)
+func NewTempestRun(fname string, conf config.TempestConf) *TempestRun {
+        return &TempestRun { 
+                filename: fname,
+                conf: conf,
+                stop: make(chan bool),
+                err: make(chan string),
+        }
 }
 
 
-func IntervalTicker(interval int) <-chan time.Time {
-        return time.Tick(time.Duration(interval) * time.Second)
+func (tr *TempestRun) IsRunning() bool {
+        _, err := os.Stat(tr.filename)
+        return (err == nil)
 }
 
 
-func AlerterProc(c conf.TempestConf) {
-        tmr := IntervalTicker(c.AlertInterval)
-        alertmsg := func(arange conf.SensorRange, sdat sensors.SensorReading) string {
+func (tr *TempestRun) ResumeRun() error {
+        if (!tr.IsRunning()) {
+                return errors.New("Not running")
+        }
+        if st, err := tr.histfile.ReadStartTime(); err != nil {
+                return err
+        } else {
+                tr.start = st
+        }
+        go tr.histRecorderProc()
+        go tr.alerterProc()
+        return nil
+}
+
+
+func (tr *TempestRun) StartRun() error {
+        if (tr.IsRunning()) {
+                return errors.New("Already running") 
+        }
+        tr.histfile = OpenHistFile(tr.filename)
+        tr.histfile.WriteStartTime(time.Now())
+        return tr.ResumeRun()
+}
+        
+
+func (tr *TempestRun) StopRun() error {
+        if (!tr.IsRunning()) {
+                return errors.New("Not running")
+        }
+        tr.stop <- true
+        fn, st := tr.filename, tr.start
+        os.Rename(fn, fmt.Sprintf("%s-%02d%02d%02d%02d%02d%02d", fn, 
+                                  st.Year(), st.Month(), st.Day(),
+                                  st.Hour(), st.Minute(), st.Second()))
+        return nil
+}
+
+
+
+func (tr *TempestRun) alerterProc() {
+        tmr := intervalTicker(tr.conf.AlertInterval)
+        alertmsg := func(arange config.SensorRange, sdat sensors.SensorReading) string {
                 msg := ""
                 if sdat.Err != "" {
                         msg =  sdat.Err
@@ -53,45 +102,56 @@ func AlerterProc(c conf.TempestConf) {
                 return msg
         } 
         checkalerts := func() {
-                for sname, sdat := range(sensors.ReadSensors(c.Sensors)) {
-                        if amsg := alertmsg(c.Sensors[sname].Alert, sdat); amsg != "" {
-                                Alert(sname, amsg)
+                for sname, sdat := range(sensors.ReadSensors(tr.conf.Sensors)) {
+                        if amsg := alertmsg(tr.conf.Sensors[sname].Alert, sdat); amsg != "" {
+                                alert(sname, amsg)
                         }
                 }
         }
                                 
         for {
-                <-tmr
-                checkalerts()
+                select {
+                case quit := <-tr.stop:
+                        if (quit) {
+                                return
+                        }
+                case <-tmr:
+                        checkalerts()
+                }
         }
 }
 
 
-func HistRecorderProc(c conf.TempestConf, hist HistFile) {
-        tmr := IntervalTicker(c.HistInterval)
+func (tr *TempestRun) histRecorderProc() {
+        tmr := intervalTicker(tr.conf.HistInterval)
         writerec := func (t int) { 
-                readings := sensors.ReadSensors(c.Sensors)
-                if err := hist.Write(readings.ToCSVRecord(t)); err != nil {
-                        fmt.Printf("ERROR: %s", err.Error())
+                readings := sensors.ReadSensors(tr.conf.Sensors)
+                if err := tr.histfile.Write(readings.ToCSVRecord(t)); err != nil {
+                        tr.err <- err.Error()
                 }
         }
         tbegin := time.Now()
         writerec(0)
-        for now := range(tmr) {
-                writerec(int(now.Sub(tbegin).Seconds())) 
+        for {
+                select {
+                case quit := <-tr.stop:
+                        if (quit) {
+                                return
+                        }
+                case now := <-tmr:
+                        writerec(int(now.Sub(tbegin).Seconds())) 
+                }
         }
 }
 
 
-
-func main() {
-        if conf, err := conf.LoadConf("testconf"); err != nil {
-                fmt.Printf("Error loading conf: %s\n", err)
-        } else {
-                fmt.Println(JsonStr(conf.Sensors))
-                go HistRecorderProc(conf, OpenHistFile(RunHistFile))
-                AlerterProc(conf)
-        }
+func intervalTicker(interval int) <-chan time.Time {
+        return time.Tick(time.Duration(interval) * time.Second)
 }
 
+
+func alert(sname, msg string) {
+        fmt.Printf("ALERT: %s sensor: %s\n", sname, msg)
+        //TODO:  Send some emails too
+}
 

@@ -1,2 +1,3 @@
 all:
-	go build tempest.go hist.go
+	go build tempest.go hist.go web.go
+

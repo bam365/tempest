@@ -12,5 +12,5 @@
                 }
         },
         "alertdelay": 5,
-        "histdelay": 60
+        "histdelay": 5 
 }

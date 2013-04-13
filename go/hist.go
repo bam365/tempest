@@ -1,10 +1,18 @@
+/* hist.go - Defines operations on a CSV database history file
+ * Copyright (C) 2013  Blake Mitchell 
+ */
 package main
 
 import (
         "os"
         "encoding/csv"
         "sync"
+        "time"
+        "errors"
 )
+
+
+const DateTimeFormat = time.RFC1123Z
 
 
 type HistFile struct {
@@ -17,6 +25,43 @@ func OpenHistFile(fname string) HistFile {
         return HistFile { new(sync.Mutex), fname }
 }
 
+
+func (hf *HistFile) WriteStartTime(t time.Time) error {
+        return hf.Write([]string { t.Format(DateTimeFormat) })
+}
+
+
+func (hf *HistFile) readAllRecords() ([][]string, error) {
+        hf.hflock.Lock()
+        defer hf.hflock.Unlock()
+
+        flags := os.O_RDONLY
+        file, err := os.OpenFile(hf.FileName, flags, 0666) 
+        if err != nil {
+                return nil, err
+        }
+        defer file.Close()
+
+        rdr := csv.NewReader(file)
+        return rdr.ReadAll()
+}
+
+
+func (hf *HistFile) ReadStartTime() (time.Time, error) {
+        ret, rerr := time.Now(), error(nil)
+        if recs, err := hf.readAllRecords(); err != nil {
+                rerr = err
+        } else {
+                if len(recs) < 1 {
+                        rerr = errors.New("No time record present")
+                } else {
+                        trec := recs[0][0]
+                        ret, rerr = time.Parse(DateTimeFormat, trec)
+                }
+        }
+        return ret, rerr
+}
+                
 
 func (hf *HistFile) Write(rec []string) error {
         hf.hflock.Lock()
@@ -34,11 +79,3 @@ func (hf *HistFile) Write(rec []string) error {
         wtr.Flush()
         return werr
 }
-
-
-
-
-
-
-
-
