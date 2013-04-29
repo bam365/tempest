@@ -9,12 +9,11 @@ import (
         "encoding/json"
         //"net/http"
         "net/smtp"
-        "os"
-        "bufio"
 )
 
 import (
         //"github.com/gorilla/mux"
+        "github.com/howeyc/gopass"
 )
 
 import (
@@ -50,14 +49,10 @@ func JsonStr(v interface{}) string {
 
 func GetEmailPassword(conf config.TempestConf) string {
         ret := ""
-        rdr := bufio.NewReader(os.Stdin)
         if conf.ShouldEmail() {
                 fmt.Printf("Enter password for SMTP account %s at %s: ",
                             conf.Smtp.User, conf.Smtp.Server)
-                //TODO: Do this with no echo
-                if in, err := rdr.ReadString('\n'); err == nil {
-                        ret = in
-                }
+                ret = string(gopass.GetPasswd())
         }
         return ret
 }
