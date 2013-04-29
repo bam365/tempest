@@ -17,7 +17,7 @@ type EmailInfo struct {
         
 
 func NewEmailInfo(addr, user, pass string) *EmailInfo {
-        auth := smtp.PlainAuth("", user pass, addr)
+        auth := smtp.PlainAuth("", user, pass, addr)
         return &EmailInfo { addr, auth }
 }
         

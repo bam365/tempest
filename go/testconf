@@ -15,7 +15,8 @@
         "histdelay": 5,
         "smtp": {
                 "server": "smtp.gmail.com",
-                "user":   "bam365@mst.edu",
+                "user":   "blah@blah.blah",
                 "auth":   "tls"
-        }
+        },
+        "emails": ["blah@blah.blah"]
 }

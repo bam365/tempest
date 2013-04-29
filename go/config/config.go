@@ -70,6 +70,5 @@ func LoadConf(fname string) (TempestConf, error) {
 
 func (tc *TempestConf) ShouldEmail() bool {
         s := tc.Smtp
-        return (s.Server != "" && s.User != ""
-                && len(tc.Emails) > 0))
-        }
+        return (s.Server != "" && s.User != "" && len(tc.Emails) > 0)
+}

@@ -28,16 +28,17 @@ type TempestRun struct {
         start    time.Time
         stop     chan bool 
         err      chan string
+        alert    chan string
 }
 
 
 func NewTempestRun(fname string, conf config.TempestConf) *TempestRun {
         return &TempestRun { 
+                Conf: conf,
                 filename: fname,
-                conf: conf,
                 stop: make(chan bool),
                 err: make(chan string),
-                alert: make(chan string)
+                alert: make(chan string),
         }
 }
 
@@ -49,7 +50,7 @@ func (tr *TempestRun) IsRunning() bool {
 
 
 func (tr *TempestRun) ResumeRun() error {
-        if (!tr.IsRunning()) {
+        if !tr.IsRunning() {
                 return errors.New("Not running")
         }
         if st, err := tr.histfile.ReadStartTime(); err != nil {
@@ -88,7 +89,7 @@ func (tr *TempestRun) StopRun() error {
 
 
 func (tr *TempestRun) alerterProc() {
-        tmr := intervalTicker(tr.conf.AlertInterval)
+        tmr := intervalTicker(tr.Conf.AlertInterval)
         alertmsg := func(arange config.SensorRange, sdat sensors.SensorReading) string {
                 msg := ""
                 if sdat.Err != "" {
@@ -103,9 +104,9 @@ func (tr *TempestRun) alerterProc() {
                 return msg
         } 
         checkalerts := func() {
-                for sname, sdat := range(sensors.ReadSensors(tr.conf.Sensors)) {
-                        if amsg := alertmsg(tr.conf.Sensors[sname].Alert, sdat); amsg != "" {
-                                alert <- alertMessage(sname, amsg)
+                for sname, sdat := range(sensors.ReadSensors(tr.Conf.Sensors)) {
+                        if amsg := alertmsg(tr.Conf.Sensors[sname].Alert, sdat); amsg != "" {
+                                tr.alert <- amsg 
                         }
                 }
         }
@@ -124,9 +125,9 @@ func (tr *TempestRun) alerterProc() {
 
 
 func (tr *TempestRun) histRecorderProc() {
-        tmr := intervalTicker(tr.conf.HistInterval)
+        tmr := intervalTicker(tr.Conf.HistInterval)
         writerec := func (t int) { 
-                readings := sensors.ReadSensors(tr.conf.Sensors)
+                readings := sensors.ReadSensors(tr.Conf.Sensors)
                 if err := tr.histfile.Write(readings.ToCSVRecord(t)); err != nil {
                         tr.err <- err.Error()
                 }
