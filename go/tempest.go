@@ -22,9 +22,9 @@ const DefaultRunHistFile = "runhist.csv"
 
 
 type TempestRun struct {
+        Conf     config.TempestConf
         filename string
         histfile HistFile
-        conf     config.TempestConf
         start    time.Time
         stop     chan bool 
         err      chan string
@@ -37,6 +37,7 @@ func NewTempestRun(fname string, conf config.TempestConf) *TempestRun {
                 conf: conf,
                 stop: make(chan bool),
                 err: make(chan string),
+                alert: make(chan string)
         }
 }
 
@@ -104,7 +105,7 @@ func (tr *TempestRun) alerterProc() {
         checkalerts := func() {
                 for sname, sdat := range(sensors.ReadSensors(tr.conf.Sensors)) {
                         if amsg := alertmsg(tr.conf.Sensors[sname].Alert, sdat); amsg != "" {
-                                alert(sname, amsg)
+                                alert <- alertMessage(sname, amsg)
                         }
                 }
         }
@@ -150,8 +151,7 @@ func intervalTicker(interval int) <-chan time.Time {
 }
 
 
-func alert(sname, msg string) {
-        fmt.Printf("ALERT: %s sensor: %s\n", sname, msg)
-        //TODO:  Send some emails too
+func alertMessage(sname, msg string) {
+        fmt.Sprintf("ALERT: %s sensor: %s", sname, msg)
 }
 

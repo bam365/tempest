@@ -8,6 +8,7 @@ import (
         "time"
         "encoding/json"
         //"net/http"
+        "net/smtp"
 )
 
 import (
@@ -40,3 +41,24 @@ func JsonStr(v interface{}) string {
         b, _ := json.MarshalIndent(v, "", "\t")
         return string(b)
 }
+
+
+func GetSmtpAuth(conf *conf.TempestConf) *smtp.Auth {
+        return &smtp.PlainAuth(
+
+func AlertListener(tr *TempestRun, smtpinf *smtp.ServerInfo) { 
+        
+        sendmail := func(msg string) {
+                smtpauth := smtp.PlainAuth
+                Semtp
+
+        alert := func(msg string) {
+                fmt.Println(msg)
+                if smtpcli != nil && tr.Conf.ShouldEmail() {
+                        sendmail(msg)
+                }
+        }
+
+        for {
+                amsg := <-
+

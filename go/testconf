@@ -12,5 +12,10 @@
                 }
         },
         "alertdelay": 5,
-        "histdelay": 5 
+        "histdelay": 5,
+        "smtp": {
+                "server": "smtp.gmail.com",
+                "user":   "bam365@mst.edu",
+                "auth":   "tls"
+        }
 }

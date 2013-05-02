@@ -26,12 +26,19 @@ type (
 
         SensorConf map[string]SensorData
 
+        SmtpSettings struct {
+                Server string     `json:"server"`
+                User   string     `json:"user"`
+                Auth   string     `json:"auth"`
+        }
+
 
         TempestConf struct {
                 Sensors SensorConf `json:"sensors"`
+                Smtp SmtpSettings  `json:"smtp"`
                 Emails []string    `json:"emails"`
                 AlertInterval int  `json:"alertdelay"`
-                HistInterval int  `json:"histdelay"`
+                HistInterval int   `json:"histdelay"`
         }
 )
 
@@ -60,3 +67,9 @@ func LoadConf(fname string) (TempestConf, error) {
         return conf, rerr 
 }
 
+
+func (tc *TempestConf) ShouldEmail() bool {
+        s := tc.Smtp
+        return (s.Server != "" && s.User != ""
+                && len(tc.Emails) > 0))
+        }
