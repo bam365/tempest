@@ -51,8 +51,7 @@ func (tr *TempestRun) IsRunning() bool {
 
 func (tr *TempestRun) ResumeRun() error {
         if !tr.IsRunning() {
-                return errors.New("Not running")
-        }
+                return errors.New("Not running") }
         if st, err := tr.histfile.ReadStartTime(); err != nil {
                 return err
         } else {
@@ -106,7 +105,7 @@ func (tr *TempestRun) alerterProc() {
         checkalerts := func() {
                 for sname, sdat := range(sensors.ReadSensors(tr.Conf.Sensors)) {
                         if amsg := alertmsg(tr.Conf.Sensors[sname].Alert, sdat); amsg != "" {
-                                tr.alert <- amsg 
+                                tr.alert <- fmt.Sprintf("Sensor %s: %s", sname, amsg )
                         }
                 }
         }
