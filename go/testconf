@@ -15,8 +15,9 @@
         "histdelay": 5,
         "smtp": {
                 "server": "smtp.gmail.com",
-                "user":   "blah@blah.blah",
+                "port": 587,
+                "user":   "blah@blah.com",
                 "auth":   "tls"
         },
-        "emails": ["blah@blah.blah"]
+        "emails": ["foo@bar.com"]
 }

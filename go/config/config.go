@@ -28,6 +28,7 @@ type (
 
         SmtpSettings struct {
                 Server string     `json:"server"`
+                Port   int        `json:"port"`
                 User   string     `json:"user"`
                 Auth   string     `json:"auth"`
         }
@@ -72,3 +73,5 @@ func (tc *TempestConf) ShouldEmail() bool {
         s := tc.Smtp
         return (s.Server != "" && s.User != "" && len(tc.Emails) > 0)
 }
+
+

@@ -25,8 +25,7 @@ func main() {
         if conf, err := config.LoadConf("testconf"); err != nil {
                 fmt.Printf("Error loading conf: %s\n", err)
         } else {
-                emailinf := NewEmailInfo(conf.Smtp.Server, conf.Smtp.User,
-                                         GetEmailPassword(conf))
+                emailinf := NewEmailInfoFromConf(conf.Smtp, GetEmailPassword(conf))
                 fmt.Println(JsonStr(conf.Sensors))
                 //TODO: Don't do this here, start web server instead
                 run := NewTempestRun("runhist.csv", conf)
@@ -60,8 +59,8 @@ func GetEmailPassword(conf config.TempestConf) string {
 
 func AlertListener(tr *TempestRun, ei *EmailInfo) { 
         sendmail := func(msg string) {
-                err := smtp.SendMail(ei.Serv, ei.Auth, "Tempest Alerter", 
-                                     tr.Conf.Emails, []byte(msg))
+                err := smtp.SendMail(ei.FullServer(), ei.Auth, "Tempest Alerter", 
+                tr.Conf.Emails, []byte("Subject: Tempest alert\n" + msg))
                 if err != nil {
                         fmt.Printf("Could not send alert emails.\nReason: %s\n", 
                                     err.Error())
@@ -74,6 +73,8 @@ func AlertListener(tr *TempestRun, ei *EmailInfo) {
                 }
         }
 
+        //DBG
+        fmt.Println(tr.Conf.Emails)
         for {
                 amsg := <-tr.alert
                 alert(amsg)
