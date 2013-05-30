@@ -13,6 +13,10 @@ import (
 
 
 const DateTimeFormat = time.RFC1123Z
+//According to golang docs, setting CSV reader's FieldsPerRecord
+//to a negative number will cause it to read variable-length
+//records
+const CSV_VariableRecordLength = -1
 
 
 type HistFile struct {
@@ -43,6 +47,7 @@ func (hf *HistFile) readAllRecords() ([][]string, error) {
         defer file.Close()
 
         rdr := csv.NewReader(file)
+        rdr.FieldsPerRecord = CSV_VariableRecordLength 
         return rdr.ReadAll()
 }
 
