@@ -51,7 +51,9 @@ func (tr *TempestRun) IsRunning() bool {
 
 func (tr *TempestRun) ResumeRun() error {
         if !tr.IsRunning() {
-                return errors.New("Not running") }
+                return errors.New("Not running") 
+        }
+        tr.histfile = OpenHistFile(tr.filename)
         if st, err := tr.histfile.ReadStartTime(); err != nil {
                 return err
         } else {
