@@ -6,10 +6,10 @@ package main
 import (
         "fmt"
         "encoding/json"
-        "time"
         "net/smtp"
         "bufio"
         "os"
+        "time"
         "strings"
 )
 
@@ -22,27 +22,35 @@ import (
 )
 
 
+type TempestData struct {
+        Conf *config.TempestConf
+        Run *TempestRun
+        EmailInf *EmailInfo
+        Running bool
+}
+
+
 func main() {
+        td := TempestData {}
         if conf, err := config.LoadConf("testconf"); err != nil {
                 fmt.Printf("Error loading conf: %s\n", err)
         } else {
-                emailinf := NewEmailInfoFromConf(conf.Smtp, GetEmailPassword(conf))
-                //TODO: Don't do this here, start web server instead
-                run := NewTempestRun("runhist.csv", conf)
-                if rerr := run.StartRun(); rerr != nil {
-                        fmt.Printf("Run error: %s\n", rerr.Error())
-                } else {
-                        defer run.StopRun()
-                        go AlertListener(run, emailinf)
-                        time.Sleep(60 * time.Second)
+                td.Conf = &conf
+                td.EmailInf = NewEmailInfoFromConf(conf.Smtp, GetEmailPassword(conf))
+                td.Run = NewTempestRun("runhist.csv", conf)
+                if td.Run.IsRunning() {
+                        if rerr := td.Run.ResumeRun(); rerr != nil {
+                                fmt.Printf("Run error: %s\n", rerr.Error())
+                                return 
+                        }
                 }
-
                 fmt.Print("Starting web server...")
                 //TODO: WebServer() returns an err, which we shouldn't be ignoring.
                 //This is going to take some doing.
                 go WebServer(conf.Port)
                 fmt.Println("DONE")
-                RunConsole(&conf, run.alert)
+                td.Running = true
+                RunConsole(&td)
         }
 }
 
@@ -64,7 +72,8 @@ func GetEmailPassword(conf config.TempestConf) string {
 }
 
 
-func AlertListener(tr *TempestRun, ei *EmailInfo) { 
+func AlertHandler(amsg string, td *TempestData) { 
+        tr, ei := td.Run, td.EmailInf
         sendmail := func(msg string) {
                 err := smtp.SendMail(ei.FullServer(), ei.Auth, "Tempest Alerter", 
                 tr.Conf.Emails, []byte("Subject: Tempest alert\n" + msg))
@@ -74,52 +83,41 @@ func AlertListener(tr *TempestRun, ei *EmailInfo) {
                 }
         }
         alert := func(msg string) {
-                fmt.Println(msg)
+                layout := "1/2/06 3:04:05 PM"
+                fmt.Printf("\n(%s) ALERT: %s\n", time.Now().Format(layout), msg)
                 if tr.Conf.ShouldEmail() {
                         sendmail(msg)
                 }
         }
 
-        //DBG
-        fmt.Println(tr.Conf.Emails)
-        for {
-                amsg := <-tr.alert
-                alert(amsg)
-        }
+        alert(amsg)
 }
+
 
        
-type Command func(*config.TempestConf) int
-
-
-var CommandMappings = map[string]Command {
-        "conf": CmdDumpConf,
-}
-
-
-func RunConsole(conf *config.TempestConf, alerts <-chan string) {
-        quit := false
+func RunConsole(td *TempestData) {
         cmdin := make(chan string)
+        alerts := td.Run.alert
         prompt := func () {
                 fmt.Print("tempest> ")
         }
 
         prompt()
         go GetCommand(cmdin)
-        for !quit {
+        for td.Running {
                 select {
-                case <-alerts:
+                case amsg := <-alerts:
+                        AlertHandler(amsg, td)
                         //Alert screwed up our prompt, redo it
                         prompt()
                 case cmd := <-cmdin:
                         cmd = strings.ToLower(cmd)
-                        if cmd == "quit" || cmd == "bye" || cmd == "exit" {
-                                quit = true
-                        } else {
-                                RunCommand(cmd, conf)
+                        RunCommand(cmd, td)
+                        if (td.Running) {
                                 prompt()
                                 go GetCommand(cmdin)
                         }
+                       
                 }
         }
 }
@@ -136,24 +134,14 @@ func GetCommand(cmdin chan<- string) {
 }
 
 
-func RunCommand(cmd string, conf *config.TempestConf) int {
+func RunCommand(cmd string, td *TempestData) int {
         //TODO: Will probably have to parse out args from cmd 
         ret := 0
         if c, exists := CommandMappings[cmd]; exists {
-                ret = c(conf)
+                ret = c.Run(td)
         } else {
                 fmt.Println("No such command")
         }
 
         return ret
 }
-
-
-func CmdDumpConf(conf *config.TempestConf) int {
-        fmt.Println(JsonStr(conf))
-        return 0
-}
-
-
-
-
