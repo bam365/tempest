@@ -19,5 +19,6 @@
                 "user":   "blah@blah.com",
                 "auth":   "tls"
         },
-        "emails": ["foo@bar.com"]
+        "emails": ["foo@bar.com"],
+        "port": 8080
 }

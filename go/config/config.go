@@ -40,6 +40,7 @@ type (
                 Emails []string    `json:"emails"`
                 AlertInterval int  `json:"alertdelay"`
                 HistInterval int   `json:"histdelay"`
+                Port int           `json:"port"`
         }
 )
 
@@ -50,6 +51,7 @@ func NewTempestConf() TempestConf {
                 Emails: make([]string, 0),
                 AlertInterval: 60,
                 HistInterval: 60,
+                Port: 8080,
         }
 }
 
