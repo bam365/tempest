@@ -31,7 +31,7 @@ type TempestData struct {
 
 
 func main() {
-        td := TempestData {}
+        td := new(TempestData)
         if conf, err := config.LoadConf("testconf"); err != nil {
                 fmt.Printf("Error loading conf: %s\n", err)
         } else {
@@ -45,12 +45,13 @@ func main() {
                         }
                 }
                 fmt.Print("Starting web server...")
-                //TODO: WebServer() returns an err, which we shouldn't be ignoring.
+                ws := NewWebServer(td)
+                //TODO: WebServer.Run() returns an err, which we shouldn't be ignoring.
                 //This is going to take some doing.
-                go WebServer(conf.Port)
+                go ws.Run()
                 fmt.Println("DONE")
                 td.Running = true
-                RunConsole(&td)
+                RunConsole(td)
         }
 }
 
