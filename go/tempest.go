@@ -32,13 +32,13 @@ type TempestRun struct {
 }
 
 
-func NewTempestRun(fname string, conf config.TempestConf) *TempestRun {
+func NewTempestRun(fname string, td *TempestData) *TempestRun {
         return &TempestRun { 
-                Conf: conf,
+                Conf: *td.Conf,
                 filename: fname,
                 stop: make(chan bool),
                 err: make(chan string),
-                alert: make(chan string),
+                alert: td.Alert,
         }
 }
 

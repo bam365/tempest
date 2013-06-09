@@ -30,6 +30,7 @@ var CommandMappings = map[string]Commander {
         "quit": CmdQuit {},
         "conf": CmdConfDump {},
         "read": CmdReadSensors {},
+        "testemail": CmdTestEmail {},
 }
 
 
@@ -86,5 +87,19 @@ func (s CmdReadSensors) Run(td *TempestData) int {
 }
 
 
+type CmdTestEmail struct {}
+
+func (s CmdTestEmail) Describe() string {
+        return "Send a test email to everyone"
+}
+
+func (s CmdTestEmail) Run(td *TempestData) int {
+        fmt.Println("Sending email to:")
+        for _, emailaddr := range(td.Conf.Emails) {
+                fmt.Printf("\t%s\n", emailaddr)
+        }
+        EmailEveryone(*td, "Tempest Test", "Tempest test")
+        return RunSuccess
+}
 
 

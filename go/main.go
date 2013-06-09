@@ -27,6 +27,10 @@ type TempestData struct {
         Run *TempestRun
         EmailInf *EmailInfo
         Running bool
+        //Email and stdout
+        Alert chan string
+        //Just stdout
+        Msg chan string
 }
 
 
@@ -36,8 +40,10 @@ func main() {
                 fmt.Printf("Error loading conf: %s\n", err)
         } else {
                 td.Conf = &conf
+                td.Alert = make(chan string)
+                td.Msg = make(chan string)
                 td.EmailInf = NewEmailInfoFromConf(conf.Smtp, GetEmailPassword(conf))
-                td.Run = NewTempestRun("runhist.csv", conf)
+                td.Run = NewTempestRun("runhist.csv", td)
                 if td.Run.IsRunning() {
                         if rerr := td.Run.ResumeRun(); rerr != nil {
                                 fmt.Printf("Run error: %s\n", rerr.Error())
@@ -73,43 +79,44 @@ func GetEmailPassword(conf config.TempestConf) string {
 }
 
 
-func AlertHandler(amsg string, td *TempestData) { 
-        tr, ei := td.Run, td.EmailInf
-        sendmail := func(msg string) {
-                err := smtp.SendMail(ei.FullServer(), ei.Auth, "Tempest Alerter", 
-                tr.Conf.Emails, []byte("Subject: Tempest alert\n" + msg))
-                if err != nil {
-                        fmt.Printf("Could not send alert emails.\nReason: %s\n", 
-                                    err.Error())
-                }
-        }
-        alert := func(msg string) {
-                layout := "1/2/06 3:04:05 PM"
-                fmt.Printf("\n(%s) ALERT: %s\n", time.Now().Format(layout), msg)
-                if tr.Conf.ShouldEmail() {
-                        sendmail(msg)
-                }
+//Will print a message to stdout if there's an error
+func EmailEveryone(td TempestData, subject, body string) {
+        ei, tc := td.EmailInf, td.Conf
+        msg := fmt.Sprintf("Subject: %s\n%s\n", subject, body)
+        err := smtp.SendMail(ei.FullServer(), ei.Auth, "Tempest Alerter", 
+                             tc.Emails, []byte(msg))
+        if err != nil {
+                fmt.Printf("Could not send emails.\nReason %s\n", err.Error())
         }
 
-        alert(amsg)
 }
 
 
-       
 func RunConsole(td *TempestData) {
         cmdin := make(chan string)
-        alerts := td.Run.alert
         prompt := func () {
                 fmt.Print("tempest> ")
+        }
+        alert := func(amsg string) {
+                layout := "1/2/06 3:04:05 PM"
+                pmsg := fmt.Sprintf("\n(%s) ALERT: %s", 
+                                    time.Now().Format(layout), amsg)
+                fmt.Println(pmsg) 
+                if td.Conf.ShouldEmail() {
+                        EmailEveryone(*td, "Tempest Alert", amsg)
+                }
         }
 
         prompt()
         go GetCommand(cmdin)
         for td.Running {
                 select {
-                case amsg := <-alerts:
-                        AlertHandler(amsg, td)
-                        //Alert screwed up our prompt, redo it
+                case pmsg := <-td.Msg:
+                        fmt.Println(pmsg)
+                        //Message screwed up our prompt, redo it
+                        prompt()
+                case amsg := <-td.Alert:
+                        alert(amsg)
                         prompt()
                 case cmd := <-cmdin:
                         cmd = strings.ToLower(cmd)
