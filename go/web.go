@@ -18,6 +18,7 @@ import (
 
 const (
         SensorFile = "html/sensors.html"
+        ReadingsFile = "html/readings.html"
 )
 
 type (
@@ -38,7 +39,8 @@ func NewWebServer(td *TempestData) *WebServer {
 
         ws.TData = td
         ws.URLMappings = map[string]PageHandler {
-                "/sensors": ws.HandleSensors, 
+                "/sensors": StaticFileServer(SensorFile), 
+                "/readings": StaticFileServer(ReadingsFile),
                 "/ajax/{request}": ws.HandleAjax,
         }
 
@@ -66,14 +68,16 @@ func (ws *WebServer) SetupUrlRouter() *mux.Router {
 }
 
 
-func (ws *WebServer) HandleSensors(w http.ResponseWriter, r *http.Request) {
-
-        if buf, err := ioutil.ReadFile(SensorFile); err != nil {
-                http.Error(w, err.Error(), http.StatusNotFound)
-        } else {
-                fmt.Fprint(w, string(buf))
+func StaticFileServer(fname string) PageHandler {
+        return func(w http.ResponseWriter, r *http.Request) {
+                if buf, err := ioutil.ReadFile(fname); err != nil {
+                        http.Error(w, err.Error(), http.StatusNotFound)
+                } else {
+                        fmt.Fprint(w, string(buf))
+                }
         }
 }
+
 
 
 func ParseRequestBody(r *http.Request) (string, error) {
