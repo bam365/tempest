@@ -10,6 +10,8 @@ Dependencies
 
 - Go v1.1
 - Go gets:
-        - github.com/gorilla/mux
-        - github.com/howiec/gopass
+```
+github.com/gorilla/mux
+github.com/howiec/gopass
+```
 
