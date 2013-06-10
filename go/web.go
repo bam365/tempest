@@ -42,6 +42,7 @@ func NewWebServer(td *TempestData) *WebServer {
                 "/sensors": StaticFileServer(SensorFile), 
                 "/readings": StaticFileServer(ReadingsFile),
                 "/ajax/{request}": ws.HandleAjax,
+                "/js/tempest/{file}": StaticFileServerFromVar("file", "html/js/tempest"),
         }
 
         ws.AjaxMappings = map[string]AjaxHandler {
@@ -78,6 +79,18 @@ func StaticFileServer(fname string) PageHandler {
         }
 }
 
+
+func StaticFileServerFromVar(varname, basepath string) PageHandler {
+        return func(w http.ResponseWriter, r *http.Request) {
+                vars := mux.Vars(r)
+                fname := basepath + "/" + vars[varname]
+                if buf, err := ioutil.ReadFile(fname); err != nil {
+                        http.Error(w, err.Error(), http.StatusNotFound)
+                } else {
+                        fmt.Fprint(w, string(buf))
+                }
+        }
+}
 
 
 func ParseRequestBody(r *http.Request) (string, error) {
@@ -124,3 +137,4 @@ func (ws *WebServer) AjaxReadings(arg string) (ret string, rerr error) {
         readings := sensors.ReadSensors(ws.TData.Conf.Sensors)
         return JsonStr(readings), nil
 }
+

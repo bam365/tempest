@@ -1,10 +1,41 @@
 <html>
         <head>
                 <title>Tempest - readings</title>
+
+                <script>
+                        var dojoConfig = {
+                                has: {
+                                        "dojo-firebug": true
+                                },
+                                parseOnLoad: true,
+                                baseUrl: "/js",
+                                packages: [{
+                                        name: "tempest",
+                                        location: location.pathname.replace(/\/[^/]*$/, '')
+                                }],
+                                debugAtAllCosts: true,
+                                async: true
+                        };
+                </script>
+                <script src="//ajax.googleapis.com/ajax/libs/dojo/1.9.0/dojo/dojo.js"></script>
+
+                <script>
+                        var tick = function() {
+                                require(["tempest/readings"], function(readings) {
+                                        readings.updateReadings();
+                                });
+                        };
+
+                        tick();
+                        setInterval(tick, 15000); 
+                </script>
         </head>
 
+
         <body>
+
                 <h3>Sensor readings</h3>
-                <div id="readings"></div>
+                <div id="readings"> </div>
+
         </body>
 </html>
