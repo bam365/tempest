@@ -18,13 +18,13 @@ import (
 )
 
 
-const DefaultRunHistFile = "runhist.csv"
+const CurrentRunHistFile = "runhist.csv"
 
 
 type TempestRun struct {
         Conf     config.TempestConf
         filename string
-        histfile HistFile
+        History HistFile
         start    time.Time
         stop     chan bool 
         err      chan string
@@ -53,8 +53,8 @@ func (tr *TempestRun) ResumeRun() error {
         if !tr.IsRunning() {
                 return errors.New("Not running") 
         }
-        tr.histfile = OpenHistFile(tr.filename)
-        if st, err := tr.histfile.ReadStartTime(); err != nil {
+        tr.History = OpenHistFile(tr.filename)
+        if st, err := tr.History.ReadStartTime(); err != nil {
                 return err
         } else {
                 tr.start = st
@@ -69,8 +69,8 @@ func (tr *TempestRun) StartRun() error {
         if (tr.IsRunning()) {
                 return errors.New("Already running") 
         }
-        tr.histfile = OpenHistFile(tr.filename)
-        tr.histfile.WriteStartTime(time.Now())
+        tr.History = OpenHistFile(tr.filename)
+        tr.History.WriteStartTime(time.Now())
         return tr.ResumeRun()
 }
         
@@ -129,7 +129,7 @@ func (tr *TempestRun) histRecorderProc() {
         tmr := intervalTicker(tr.Conf.HistInterval)
         writerec := func (t int) { 
                 readings := sensors.ReadSensors(tr.Conf.Sensors)
-                if err := tr.histfile.Write(readings.ToCSVRecord(t)); err != nil {
+                if err := tr.History.Write(readings.ToCSVRecord(t)); err != nil {
                         tr.err <- err.Error()
                 }
         }

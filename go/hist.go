@@ -35,7 +35,7 @@ func (hf *HistFile) WriteStartTime(t time.Time) error {
 }
 
 
-func (hf *HistFile) readAllRecords() ([][]string, error) {
+func (hf *HistFile) ReadAllRecords() ([][]string, error) {
         hf.hflock.Lock()
         defer hf.hflock.Unlock()
 
@@ -54,7 +54,7 @@ func (hf *HistFile) readAllRecords() ([][]string, error) {
 
 func (hf *HistFile) ReadStartTime() (time.Time, error) {
         ret, rerr := time.Now(), error(nil)
-        if recs, err := hf.readAllRecords(); err != nil {
+        if recs, err := hf.ReadAllRecords(); err != nil {
                 rerr = err
         } else {
                 if len(recs) < 1 {

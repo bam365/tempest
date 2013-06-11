@@ -7,7 +7,7 @@ import (
         "fmt"
         "net/http"
         "io/ioutil"
-        "strings"
+        "encoding/json"
 )
 
 import (
@@ -31,7 +31,18 @@ type (
                 URLMappings map[string]PageHandler
                 AjaxMappings map[string]AjaxHandler
         }
+
 )
+
+
+//Ajax requests
+type (
+        HistRequest struct {
+                Offset   int `json:"offset,omitempty"`
+                Interval int `json:"interval,omitempty"`
+        }
+)
+
 
 
 func NewWebServer(td *TempestData) *WebServer {
@@ -47,6 +58,7 @@ func NewWebServer(td *TempestData) *WebServer {
 
         ws.AjaxMappings = map[string]AjaxHandler {
                 "readings": ws.AjaxReadings,
+                "hist":     ws.AjaxHist,
         }
 
         http.Handle("/", ws.SetupUrlRouter())
@@ -106,10 +118,6 @@ func ParseRequestBody(r *http.Request) (string, error) {
 
 
 func (ws *WebServer) HandleAjax(w http.ResponseWriter, r *http.Request) {
-        if strings.ToUpper(r.Method) != "GET" {
-                http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-                return
-        }
         vars := mux.Vars(r)
         ajaxreq := vars["request"]
 
@@ -138,3 +146,22 @@ func (ws *WebServer) AjaxReadings(arg string) (ret string, rerr error) {
         return JsonStr(readings), nil
 }
 
+
+func (ws *WebServer) AjaxHist(arg string) (ret string, rerr error) {
+        hf := ws.TData.Run.History
+        req := HistRequest {}
+        json.Unmarshal([]byte(arg), &req)
+        tp, err := ReadPlotData(hf, req.Offset, req.Interval)
+        if err != nil {
+                ret, rerr = "", err
+        } else {
+                if buf, merr := json.Marshal(tp); merr == nil {
+                        ret = string(buf)
+                } else {
+                        rerr = merr 
+                }
+        }
+        return
+}
+
+                

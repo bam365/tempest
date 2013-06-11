@@ -43,7 +43,7 @@ func main() {
                 td.Alert = make(chan string)
                 td.Msg = make(chan string)
                 td.EmailInf = NewEmailInfoFromConf(conf.Smtp, GetEmailPassword(conf))
-                td.Run = NewTempestRun("runhist.csv", td)
+                td.Run = NewTempestRun(CurrentRunHistFile, td)
                 if td.Run.IsRunning() {
                         if rerr := td.Run.ResumeRun(); rerr != nil {
                                 fmt.Printf("Run error: %s\n", rerr.Error())
