@@ -1,0 +1,35 @@
+<html>
+        <head>
+                <title>Tempest - Run history</title>
+
+                <script>
+                        var dojoConfig = {
+                                has: {
+                                        "dojo-firebug": true
+                                },
+                                parseOnLoad: true,
+                                baseUrl: "/js",
+                                packages: [{
+                                        name: "tempest",
+                                        location: location.pathname.replace(/\/[^/]*$/, '')
+                                }],
+                                debugAtAllCosts: true,
+                                async: true
+                        };
+                </script>
+                <script src="//ajax.googleapis.com/ajax/libs/dojo/1.8/dojo/dojo.js"></script>
+
+                <script>
+                        require(["tempest/hist"], function(hist) {
+                                        hist.updateChart();
+                        });
+                </script>
+
+        </head>
+
+        <body>
+                <h3>Run history</h3>
+                <div id="chartNode" style="width:800px;height:400px"></div>
+                <div id="legendNode" style="width:800px"></div>
+        </body>
+</html>

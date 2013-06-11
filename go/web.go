@@ -19,6 +19,7 @@ import (
 const (
         SensorFile = "html/sensors.html"
         ReadingsFile = "html/readings.html"
+        WebHistFile = "html/hist.html"
 )
 
 type (
@@ -52,6 +53,7 @@ func NewWebServer(td *TempestData) *WebServer {
         ws.URLMappings = map[string]PageHandler {
                 "/sensors": StaticFileServer(SensorFile), 
                 "/readings": StaticFileServer(ReadingsFile),
+                "/hist": StaticFileServer(WebHistFile),
                 "/ajax/{request}": ws.HandleAjax,
                 "/js/tempest/{file}": StaticFileServerFromVar("file", "html/js/tempest"),
         }
