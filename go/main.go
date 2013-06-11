@@ -39,17 +39,13 @@ func main() {
         if conf, err := config.LoadConf("testconf"); err != nil {
                 fmt.Printf("Error loading conf: %s\n", err)
         } else {
+                fmt.Println("Loaded conf")
                 td.Conf = &conf
                 td.Alert = make(chan string)
                 td.Msg = make(chan string)
                 td.EmailInf = NewEmailInfoFromConf(conf.Smtp, GetEmailPassword(conf))
                 td.Run = NewTempestRun(CurrentRunHistFile, td)
-                if td.Run.IsRunning() {
-                        if rerr := td.Run.ResumeRun(); rerr != nil {
-                                fmt.Printf("Run error: %s\n", rerr.Error())
-                                return 
-                        }
-                }
+                TryResumeRun(td)
                 fmt.Print("Starting web server...")
                 ws := NewWebServer(td)
                 //TODO: WebServer.Run() returns an err, which we shouldn't be ignoring.
@@ -75,8 +71,29 @@ func GetEmailPassword(conf config.TempestConf) string {
                             conf.Smtp.User, conf.Smtp.Server)
                 ret = string(gopass.GetPasswd())
         }
+        fmt.Println("\n*** I didn't try to authenticate with your password")
+        fmt.Println("*** You should definitely run the 'testemail' command to verify\n")
+
         return ret
 }
+
+
+func TryResumeRun(td *TempestData) {
+        if td.Run.IsRunning() {
+                if rerr := td.Run.ResumeRun(); rerr != nil {
+                        fmt.Printf("Run error: %s\n", rerr.Error())
+                } else {
+                        t, terr := td.Run.History.ReadStartTime()
+                        if terr == nil {
+                                fmt.Print("Continuing run started on ")
+                                fmt.Println(t)
+                        }
+                }
+        } else {
+                fmt.Printf("No run is in progress");
+        }
+}
+
 
 
 //Will print a message to stdout if there's an error
