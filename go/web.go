@@ -83,13 +83,18 @@ func (ws *WebServer) SetupUrlRouter() *mux.Router {
 }
 
 
+func ServeFile(fname string, w http.ResponseWriter) {
+        if buf, err := ioutil.ReadFile(fname); err != nil {
+                http.Error(w, err.Error(), http.StatusNotFound)
+        } else {
+                fmt.Fprint(w, string(buf))
+        }
+}
+
+
 func StaticFileServer(fname string) PageHandler {
         return func(w http.ResponseWriter, r *http.Request) {
-                if buf, err := ioutil.ReadFile(fname); err != nil {
-                        http.Error(w, err.Error(), http.StatusNotFound)
-                } else {
-                        fmt.Fprint(w, string(buf))
-                }
+                ServeFile(fname, w)
         }
 }
 
@@ -98,11 +103,7 @@ func StaticFileServerFromVar(varname, basepath string) PageHandler {
         return func(w http.ResponseWriter, r *http.Request) {
                 vars := mux.Vars(r)
                 fname := basepath + "/" + vars[varname]
-                if buf, err := ioutil.ReadFile(fname); err != nil {
-                        http.Error(w, err.Error(), http.StatusNotFound)
-                } else {
-                        fmt.Fprint(w, string(buf))
-                }
+                ServeFile(fname, w)
         }
 }
 
