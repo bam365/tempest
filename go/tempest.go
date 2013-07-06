@@ -10,6 +10,7 @@ import (
         "time"
         "errors"
         "os"
+        "regexp"
 )
 
 import (
@@ -18,24 +19,144 @@ import (
 )
 
 
-const CurrentRunHistFile = "runhist.csv"
+const (
+        //Make sure this ends with a slash
+        RunHistDir = "runhist/"
+        RunHistFileName = "runhist"
+        RunHistFileExt = ".csv"
+)
+
+var ( 
+        CurrentRunHistFile = RunHistDir + RunHistFileName + RunHistFileExt
+)
 
 
-type TempestRun struct {
-        Conf     config.TempestConf
-        filename string
-        History HistFile
-        start    time.Time
-        stop     chan bool 
-        err      chan string
-        alert    chan string
+type (
+        TempestRunner interface {
+                TimeStarted() time.Time
+                TimeEnded() time.Time
+                IsRunning() bool
+                RunDuration() time.Duration 
+                Hist() *HistFile
+        }
+        
+
+        TempestRun struct {
+                StartTime  time.Time
+                EndTime    time.Time //Will be Time(0) if current
+                History    HistFile
+        }
+
+
+        CurrentTempestRun struct {
+                TempestRun
+                Conf     config.TempestConf
+                stop     chan bool 
+                err      chan string
+                alert    chan string
+        }
+)
+
+
+func TempestEncodeTime(t time.Time) string {
+        return fmt.Sprintf("%02d%02d%02d%02d%02d%02d", 
+                           t.Year(), t.Month(), t.Day(),
+                           t.Hour(), t.Minute(), t.Second())
 }
 
 
-func NewTempestRun(fname string, td *TempestData) *TempestRun {
-        return &TempestRun { 
+func TempestDecodeTime(t string) (time.Time, error) {
+        //The layout string is cryptic, it means YYMMDDhhmmss
+        return time.Parse("20060102150405", t)
+}
+
+
+func IsRunInProgress() bool {
+        _, err := os.Stat(CurrentRunHistFile)
+        return (err == nil)
+}
+
+
+func intervalTicker(interval int) <-chan time.Time {
+        return time.Tick(time.Duration(interval) * time.Second)
+}
+
+
+
+func alertMessage(sname, msg string) {
+        fmt.Sprintf("ALERT: %s sensor: %s", sname, msg)
+}
+
+
+
+// TempestRun stuff
+
+func LoadPastTempestRun(fname string) (*TempestRun, error) {
+        tr := new(TempestRun)
+        //TODO: This regex may not be right, haven't tested it
+        restr := fmt.Sprintf("%s%s-([0-9]{13})%s", 
+                             RunHistDir, RunHistFileName, RunHistFileExt)
+        //TODO: Should probably not ignore err here
+        re, _ := regexp.Compile(restr)
+        if !re.MatchString(fname) {
+                return nil, errors.New("Not a past run history file")
+        }
+        endtimestr := re.FindStringSubmatch(fname)[1]
+        if endtime, err := TempestDecodeTime(endtimestr); err != nil {
+                return nil, err
+        } else {
+                tr.EndTime = endtime
+        }
+        tr.History = OpenHistFile(fname)
+        if starttime, err := tr.Hist().ReadStartTime(); err != nil {
+                return nil, err
+        } else {
+                tr.StartTime = starttime
+        }
+        return tr, nil
+}
+
+
+func (tr TempestRun) TimeStarted() time.Time {
+        return tr.StartTime
+}
+
+
+func (tr TempestRun) TimeEnded() time.Time {
+        return tr.EndTime
+}
+
+
+func (tr TempestRun) RunDuration() time.Duration {
+        var endtime time.Time
+        if tr.IsRunning() {
+                endtime = time.Now()
+        } else {
+                endtime = tr.TimeEnded()
+        }
+        return endtime.Sub(tr.TimeStarted())
+}
+
+
+func (tr TempestRun) IsRunning() bool {
+        var ZeroTime time.Time
+        return tr.TimeEnded() == ZeroTime 
+}
+
+
+func (tr TempestRun) Hist() *HistFile {
+        return &(tr.History)
+}
+
+        
+// CurrentTempestRun stuff
+
+func newCurrentTempestRun(td *TempestData) *CurrentTempestRun {
+        return &CurrentTempestRun { 
+                TempestRun: TempestRun {
+                        History: OpenHistFile(CurrentRunHistFile),
+                },
                 Conf: *td.Conf,
-                filename: fname,
                 stop: make(chan bool),
                 err: make(chan string),
                 alert: td.Alert,
@@ -43,21 +164,43 @@ func NewTempestRun(fname string, td *TempestData) *TempestRun {
 }
 
 
-func (tr *TempestRun) IsRunning() bool {
-        _, err := os.Stat(tr.filename)
-        return (err == nil)
+func StartNewTempestRun(td *TempestData) (*CurrentTempestRun, error) {
+        if IsRunInProgress() {
+                return nil, errors.New("Run already in progress")
+        }
+        ret := newCurrentTempestRun(td)
+        ret.StartTime = time.Now()
+        if err := ret.History.WriteStartTime(ret.StartTime); err != nil {
+                return nil, err
+        }
+        if err := ret.resumeRun(); err != nil {
+                return nil, err
+        }
+        return ret, nil
 }
 
 
-func (tr *TempestRun) ResumeRun() error {
+func ResumeCurrentTempestRun(td *TempestData) (*CurrentTempestRun, error) {
+        if !IsRunInProgress() {
+                return nil, errors.New("There is no current run to resume")
+        }
+        ret := newCurrentTempestRun(td)
+        if starttime, err := ret.History.ReadStartTime(); err != nil {
+                return nil, err
+        } else {
+                ret.StartTime = starttime
+        }
+        if err := ret.resumeRun(); err != nil {
+                return nil, err
+        }
+        return ret, nil
+}
+
+
+
+func (tr *CurrentTempestRun) resumeRun() error {
         if !tr.IsRunning() {
                 return errors.New("Not running") 
-        }
-        tr.History = OpenHistFile(tr.filename)
-        if st, err := tr.History.ReadStartTime(); err != nil {
-                return err
-        } else {
-                tr.start = st
         }
         go tr.histRecorderProc()
         go tr.alerterProc()
@@ -65,31 +208,22 @@ func (tr *TempestRun) ResumeRun() error {
 }
 
 
-func (tr *TempestRun) StartRun() error {
-        if (tr.IsRunning()) {
-                return errors.New("Already running") 
-        }
-        tr.History = OpenHistFile(tr.filename)
-        tr.History.WriteStartTime(time.Now())
-        return tr.ResumeRun()
-}
-        
 
-func (tr *TempestRun) StopRun() error {
+func (tr *CurrentTempestRun) StopRun() error {
         if (!tr.IsRunning()) {
                 return errors.New("Not running")
         }
         tr.stop <- true
-        fn, st := tr.filename, tr.start
-        os.Rename(fn, fmt.Sprintf("%s-%02d%02d%02d%02d%02d%02d", fn, 
-                                  st.Year(), st.Month(), st.Day(),
-                                  st.Hour(), st.Minute(), st.Second()))
+        tr.EndTime = time.Now()
+        fn, et := CurrentRunHistFile, tr.EndTime
+        os.Rename(fn, fmt.Sprintf("%s%s-%s%s", RunHistDir, RunHistFileName,
+                                  TempestEncodeTime(et), RunHistFileExt))  
         return nil
 }
 
 
 
-func (tr *TempestRun) alerterProc() {
+func (tr *CurrentTempestRun) alerterProc() {
         tmr := intervalTicker(tr.Conf.AlertInterval)
         alertmsg := func(arange config.SensorRange, sdat sensors.SensorReading) string {
                 msg := ""
@@ -125,7 +259,7 @@ func (tr *TempestRun) alerterProc() {
 }
 
 
-func (tr *TempestRun) histRecorderProc() {
+func (tr *CurrentTempestRun) histRecorderProc() {
         tmr := intervalTicker(tr.Conf.HistInterval)
         writerec := func (t int) { 
                 readings := sensors.ReadSensors(tr.Conf.Sensors)
@@ -146,14 +280,3 @@ func (tr *TempestRun) histRecorderProc() {
                 }
         }
 }
-
-
-func intervalTicker(interval int) <-chan time.Time {
-        return time.Tick(time.Duration(interval) * time.Second)
-}
-
-
-func alertMessage(sname, msg string) {
-        fmt.Sprintf("ALERT: %s sensor: %s", sname, msg)
-}
-
