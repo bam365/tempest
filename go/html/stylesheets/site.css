@@ -6,31 +6,38 @@ body {
 }
 
 .runbox {
-	border: 2px solid blue;
-	height: 75px;
+	/*border: 2px solid blue; */
+	background-color: #e3e37d;
+	margin: 2px 0px 2px 0px;
+	/*height: 75px;*/
 	width: 100%;
 	overflow: auto;
 }
 
-.runstat, .runbegin, .runend, .runduration {
+.runstat-heading, .runbegin-heading, .runend-heading, .runduration-heading {
+	font-weight: bold;
+}
+.runstat, .runbegin, .runend, .runduration, 
+	.runstat-heading, .runbegin-heading, .runend-heading, .runduration-heading {
 	float: left;
 	margin: 2px 2px 2px 2px;
+	padding: 5px 5px 5px 5px;
 }
 
-.runstat {
+.runstat-heading, .runstat {
 	width: 10%;
 }
 
-.runbegin {
-	width: 35%;
+.runbegin-heading, .runbegin {
+	width: 30%;
 }
 
-.runend {
-	width: 35%;
+.runend-heading, .runend {
+	width: 30%;
 }
 
-.runduration {
-	width: 20%;
+.runduration-heading, .runduration {
+	width: 15%;
 }
 
 
