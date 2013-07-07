@@ -11,6 +11,7 @@ import (
         "errors"
         "os"
         "regexp"
+        "path/filepath"
 )
 
 import (
@@ -58,6 +59,22 @@ type (
 )
 
 
+func RunsList() []TempestRunner {
+        ret := make([]TempestRunner, 0)
+        pattern := fmt.Sprintf("%s%s*%s", RunHistDir, RunHistFileName, 
+        	               RunHistFileExt)
+        if files, ferr := filepath.Glob(pattern); ferr == nil {
+        	for _, f := range(files) {
+        		if tr, err := LoadTempestRun(f); err == nil {
+        			ret = append(ret, tr)
+        		}
+        	}
+        }
+        return ret
+}
+
+
+
 func TempestEncodeTime(t time.Time) string {
         return fmt.Sprintf("%02d%02d%02d%02d%02d%02d", 
                            t.Year(), t.Month(), t.Day(),
@@ -67,7 +84,8 @@ func TempestEncodeTime(t time.Time) string {
 
 func TempestDecodeTime(t string) (time.Time, error) {
         //The layout string is cryptic, it means YYMMDDhhmmss
-        return time.Parse("20060102150405", t)
+        loc, _ := time.LoadLocation("Local")
+        return time.ParseInLocation("20060102150405", t, loc)
 }
 
 
@@ -91,21 +109,23 @@ func alertMessage(sname, msg string) {
 
 // TempestRun stuff
 
-func LoadPastTempestRun(fname string) (*TempestRun, error) {
+func LoadTempestRun(fname string) (*TempestRun, error) {
         tr := new(TempestRun)
-        //TODO: This regex may not be right, haven't tested it
-        restr := fmt.Sprintf("%s%s-([0-9]{13})%s", 
+        curr_restr := fmt.Sprintf("%s%s%s", 
                              RunHistDir, RunHistFileName, RunHistFileExt)
-        //TODO: Should probably not ignore err here
-        re, _ := regexp.Compile(restr)
-        if !re.MatchString(fname) {
-                return nil, errors.New("Not a past run history file")
-        }
-        endtimestr := re.FindStringSubmatch(fname)[1]
-        if endtime, err := TempestDecodeTime(endtimestr); err != nil {
-                return nil, err
-        } else {
-                tr.EndTime = endtime
+        past_restr := fmt.Sprintf("%s%s-([0-9]{14})%s", 
+                             RunHistDir, RunHistFileName, RunHistFileExt)
+        curr_re := regexp.MustCompile(curr_restr)
+        past_re := regexp.MustCompile(past_restr)
+        if past_re.MatchString(fname) {
+	        endtimestr := past_re.FindStringSubmatch(fname)[1]
+	        if endtime, err := TempestDecodeTime(endtimestr); err != nil {
+	                return nil, err
+	        } else {
+	                tr.EndTime = endtime
+	        }
+	} else if !curr_re.MatchString(fname) {
+                return nil, errors.New("Not a run history file")
         }
         tr.History = OpenHistFile(fname)
         if starttime, err := tr.Hist().ReadStartTime(); err != nil {
@@ -139,8 +159,7 @@ func (tr TempestRun) RunDuration() time.Duration {
 
 
 func (tr TempestRun) IsRunning() bool {
-        var ZeroTime time.Time
-        return tr.TimeEnded() == ZeroTime 
+        return tr.TimeEnded().IsZero()
 }
 
 
@@ -267,8 +286,11 @@ func (tr *CurrentTempestRun) histRecorderProc() {
                         tr.err <- err.Error()
                 }
         }
-        tbegin := time.Now()
-        writerec(0)
+        tbegin := tr.TimeStarted() 
+        record := func(t time.Time) {
+        	writerec(int(t.Sub(tbegin).Seconds()))
+        }
+        record(time.Now())
         for {
                 select {
                 case quit := <-tr.stop:
@@ -276,7 +298,9 @@ func (tr *CurrentTempestRun) histRecorderProc() {
                                 return
                         }
                 case now := <-tmr:
-                        writerec(int(now.Sub(tbegin).Seconds())) 
+                        record(now) 
                 }
         }
 }
+
+

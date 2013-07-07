@@ -63,6 +63,10 @@ func JsonStr(v interface{}) string {
 }
 
 
+func TimeStr(t time.Time) string {
+	return t.Format("1/2/2006 3:04:05pm")
+}
+
 func GetEmailPassword(conf config.TempestConf) string {
         ret := ""
         if conf.ShouldEmail() {
@@ -84,7 +88,7 @@ func TryResumeRun(td *TempestData) {
                 } else {
                         td.Run = r
                         fmt.Print("Continuing run started on ")
-                        fmt.Println(td.Run.TimeStarted())
+                        fmt.Println(TimeStr(td.Run.TimeStarted()))
                 }
         } else {
                 fmt.Println("No run is in progress");
@@ -167,3 +171,6 @@ func RunCommand(cmd string, td *TempestData) int {
 
         return ret
 }
+
+
+

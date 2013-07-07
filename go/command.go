@@ -35,6 +35,7 @@ var CommandMappings = map[string]Commander {
         "startrun": CmdStartRun {},
         "stoprun": CmdStopRun {},
         "runstat": CmdRunStat {},
+        "listruns": CmdListRuns {},
 }
 
 
@@ -160,11 +161,33 @@ func (s CmdRunStat) Run(td *TempestData) int {
         if IsRunInProgress() {
                 run := td.Run
                 fmt.Printf("Run started: %s\nRun duration: %s\n",
-                           run.TimeStarted(), run.RunDuration())
+                           TimeStr(run.TimeStarted()), run.RunDuration())
         } else {
                 fmt.Println("No run in progress")
         }
         return RunSuccess
+}
+
+
+type CmdListRuns struct {}
+
+func (s CmdListRuns) Describe() string {
+        return "Summarize all past and current runs"
+}
+
+func (s CmdListRuns) Run(td *TempestData) int {
+	for _, run := range(RunsList()) {
+		if run.IsRunning() {
+			fmt.Printf("(Running)  Started: %s, Dur: %s\n", 
+			           TimeStr(run.TimeStarted()), 
+			           run.RunDuration())
+		} else {
+			fmt.Printf("(Finished) Started: %s, Ended: %s, Dur: %s\n", 
+			           TimeStr(run.TimeStarted()), 
+			           TimeStr(run.TimeEnded()), run.RunDuration())
+		}
+	}
+	return RunSuccess
 }
 
 
