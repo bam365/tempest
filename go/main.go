@@ -24,7 +24,7 @@ import (
 
 type TempestData struct {
         Conf *config.TempestConf
-        Run *TempestRun
+        Run *CurrentTempestRun
         EmailInf *EmailInfo
         Running bool
         //Email and stdout
@@ -44,7 +44,6 @@ func main() {
                 td.Alert = make(chan string)
                 td.Msg = make(chan string)
                 td.EmailInf = NewEmailInfoFromConf(conf.Smtp, GetEmailPassword(conf))
-                td.Run = NewTempestRun(CurrentRunHistFile, td)
                 TryResumeRun(td)
                 fmt.Print("Starting web server...")
                 ws := NewWebServer(td)
@@ -64,6 +63,10 @@ func JsonStr(v interface{}) string {
 }
 
 
+func TimeStr(t time.Time) string {
+	return t.Format("1/2/2006 3:04:05pm")
+}
+
 func GetEmailPassword(conf config.TempestConf) string {
         ret := ""
         if conf.ShouldEmail() {
@@ -79,18 +82,16 @@ func GetEmailPassword(conf config.TempestConf) string {
 
 
 func TryResumeRun(td *TempestData) {
-        if td.Run.IsRunning() {
-                if rerr := td.Run.ResumeRun(); rerr != nil {
+        if IsRunInProgress() {
+                if r, rerr := ResumeCurrentTempestRun(td); rerr != nil {
                         fmt.Printf("Run error: %s\n", rerr.Error())
                 } else {
-                        t, terr := td.Run.History.ReadStartTime()
-                        if terr == nil {
-                                fmt.Print("Continuing run started on ")
-                                fmt.Println(t)
-                        }
+                        td.Run = r
+                        fmt.Print("Continuing run started on ")
+                        fmt.Println(TimeStr(td.Run.TimeStarted()))
                 }
         } else {
-                fmt.Printf("No run is in progress");
+                fmt.Println("No run is in progress");
         }
 }
 
@@ -170,3 +171,6 @@ func RunCommand(cmd string, td *TempestData) int {
 
         return ret
 }
+
+
+

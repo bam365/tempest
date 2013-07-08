@@ -1,0 +1,43 @@
+body {
+	width: 850px;
+	margin-left: auto;
+	margin-right: auto;
+	font-family: "Ariel", "sans-serif";
+}
+
+.runbox {
+	/*border: 2px solid blue; */
+	background-color: #e3e37d;
+	margin: 2px 0px 2px 0px;
+	/*height: 75px;*/
+	width: 100%;
+	overflow: auto;
+}
+
+.runstat-heading, .runbegin-heading, .runend-heading, .runduration-heading {
+	font-weight: bold;
+}
+.runstat, .runbegin, .runend, .runduration, 
+	.runstat-heading, .runbegin-heading, .runend-heading, .runduration-heading {
+	float: left;
+	margin: 2px 2px 2px 2px;
+	padding: 5px 5px 5px 5px;
+}
+
+.runstat-heading, .runstat {
+	width: 10%;
+}
+
+.runbegin-heading, .runbegin {
+	width: 30%;
+}
+
+.runend-heading, .runend {
+	width: 30%;
+}
+
+.runduration-heading, .runduration {
+	width: 15%;
+}
+
+

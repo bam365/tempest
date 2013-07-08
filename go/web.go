@@ -8,6 +8,7 @@ import (
         "net/http"
         "io/ioutil"
         "encoding/json"
+        "html/template"
 )
 
 import (
@@ -20,6 +21,7 @@ const (
         SensorFile = "html/sensors.html"
         ReadingsFile = "html/readings.html"
         WebHistFile = "html/hist.html"
+        RunsTemplateFile = "html/templ/runs.html"
 )
 
 type (
@@ -36,12 +38,22 @@ type (
 )
 
 
-//Ajax requests
-type (
+type ( //Ajax requests
         HistRequest struct {
                 Offset   int `json:"offset,omitempty"`
                 Interval int `json:"interval,omitempty"`
         }
+)
+
+
+type ( //View models
+	RunModel struct {
+		IsRunning bool
+		Status    string
+		StartTime string
+		EndTime   string
+		Duration  string
+	}
 )
 
 
@@ -56,6 +68,9 @@ func NewWebServer(td *TempestData) *WebServer {
                 "/hist": StaticFileServer(WebHistFile),
                 "/ajax/{request}": ws.HandleAjax,
                 "/js/tempest/{file}": StaticFileServerFromVar("file", "html/js/tempest"),
+                "/stylesheets/{file}": StaticFileServerFromVar("file", 
+                	                                       "html/stylesheets"),
+                "/runs": ws.RunsHandler,
         }
 
         ws.AjaxMappings = map[string]AjaxHandler {
@@ -167,4 +182,34 @@ func (ws *WebServer) AjaxHist(arg string) (ret string, rerr error) {
         return
 }
 
+
+func RunsListToModels(runslist []TempestRunner) []RunModel {
+	ret := make([]RunModel, 0)
+	for _, run := range(runslist) {
+		et := TimeStr(run.TimeEnded())
+		stat := "Finsihed"
+		if run.IsRunning() {
+			et = "-"
+			stat = "Running"
+		}
+		mdl := RunModel {
+			IsRunning: run.IsRunning(),
+			Status: stat,
+			StartTime: TimeStr(run.TimeStarted()),
+			EndTime: et,
+			Duration: run.RunDuration().String(),
+		}
+		ret = append(ret, mdl)
+	}
+	return ret
+}
                 
+
+func (ws *WebServer) RunsHandler(w http.ResponseWriter, r *http.Request) {
+	if t, terr := template.ParseFiles(RunsTemplateFile); terr != nil {
+		http.Error(w, "Could not load view", http.StatusInternalServerError)
+	} else {
+		runs := RunsListToModels(RunsList())
+		t.Execute(w, runs)
+	}
+}

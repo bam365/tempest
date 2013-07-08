@@ -14,6 +14,7 @@ import (
 
 const (
         RunSuccess = iota
+        RunFailed
 )
 
 
@@ -31,6 +32,10 @@ var CommandMappings = map[string]Commander {
         "conf": CmdConfDump {},
         "read": CmdReadSensors {},
         "testemail": CmdTestEmail {},
+        "startrun": CmdStartRun {},
+        "stoprun": CmdStopRun {},
+        "runstat": CmdRunStat {},
+        "listruns": CmdListRuns {},
 }
 
 
@@ -100,6 +105,89 @@ func (s CmdTestEmail) Run(td *TempestData) int {
         }
         EmailEveryone(*td, "Tempest Test", "Tempest test")
         return RunSuccess
+}
+
+
+type CmdStartRun struct {}
+
+func (s CmdStartRun) Describe() string {
+        return "Start new run (if there isn't one already)"
+}
+
+func (s CmdStartRun) Run(td *TempestData) int {
+        ret := RunSuccess
+        if !IsRunInProgress() {
+                fmt.Print("Starting run...")
+                if r, rerr := StartNewTempestRun(td); rerr != nil {
+                        fmt.Println("FAILED")
+                        fmt.Printf("Reason: %s\n", rerr.Error())
+                        ret = RunFailed
+                } else {
+                        td.Run = r 
+                        fmt.Println("DONE")
+                }
+        } else {
+                fmt.Println("There's already a run in progress")
+        }
+        return ret
+}
+
+
+type CmdStopRun struct {}
+
+func (s CmdStopRun) Describe() string {
+        return "Stop current run (if there is one)"
+}
+
+func (s CmdStopRun) Run(td *TempestData) int {
+        if IsRunInProgress() {
+                fmt.Print("Stopping run...")
+                td.Run.StopRun()
+                fmt.Println("DONE")
+        } else {
+                fmt.Println("No run in progress")
+        }
+        return RunSuccess
+}
+
+
+type CmdRunStat struct {}
+
+func (s CmdRunStat) Describe() string {
+        return "Give information on current run"
+}
+
+func (s CmdRunStat) Run(td *TempestData) int {
+        if IsRunInProgress() {
+                run := td.Run
+                fmt.Printf("Run started: %s\nRun duration: %s\n",
+                           TimeStr(run.TimeStarted()), run.RunDuration())
+        } else {
+                fmt.Println("No run in progress")
+        }
+        return RunSuccess
+}
+
+
+type CmdListRuns struct {}
+
+func (s CmdListRuns) Describe() string {
+        return "Summarize all past and current runs"
+}
+
+func (s CmdListRuns) Run(td *TempestData) int {
+	for _, run := range(RunsList()) {
+		if run.IsRunning() {
+			fmt.Printf("(Running)  Started: %s, Dur: %s\n", 
+			           TimeStr(run.TimeStarted()), 
+			           run.RunDuration())
+		} else {
+			fmt.Printf("(Finished) Started: %s, Ended: %s, Dur: %s\n", 
+			           TimeStr(run.TimeStarted()), 
+			           TimeStr(run.TimeEnded()), run.RunDuration())
+		}
+	}
+	return RunSuccess
 }
 
 
