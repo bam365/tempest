@@ -5,19 +5,27 @@ body {
 	font-family: "Ariel", "sans-serif";
 }
 
-.runbox {
-	/*border: 2px solid blue; */
-	background-color: #e3e37d;
+.runbox, .runbox-running {
 	margin: 2px 0px 2px 0px;
-	/*height: 75px;*/
 	width: 100%;
 	overflow: auto;
 }
 
+.runbox {
+	background-color: #e3e37d;
+
+}
+
+.runbox-running {
+	background-color: #7aff69;
+}
+
+
 .runstat-heading, .runbegin-heading, .runend-heading, .runduration-heading {
 	font-weight: bold;
 }
-.runstat, .runbegin, .runend, .runduration, 
+
+.runstat, .runbegin, .runend, .runduration, .runview,
 	.runstat-heading, .runbegin-heading, .runend-heading, .runduration-heading {
 	float: left;
 	margin: 2px 2px 2px 2px;
@@ -37,7 +45,19 @@ body {
 }
 
 .runduration-heading, .runduration {
-	width: 15%;
+	width: 10%;
 }
+
+.runview {
+	width: 10%;
+	text-align: center;
+}
+
+.runviewlink {
+	margin: auto;
+	display: block;	
+}
+
+
 
 

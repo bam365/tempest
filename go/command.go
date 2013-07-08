@@ -161,7 +161,8 @@ func (s CmdRunStat) Run(td *TempestData) int {
         if IsRunInProgress() {
                 run := td.Run
                 fmt.Printf("Run started: %s\nRun duration: %s\n",
-                           TimeStr(run.TimeStarted()), run.RunDuration())
+                           TimeStr(run.TimeStarted()), 
+                           DurationStr(run.RunDuration()))
         } else {
                 fmt.Println("No run in progress")
         }
@@ -180,11 +181,12 @@ func (s CmdListRuns) Run(td *TempestData) int {
 		if run.IsRunning() {
 			fmt.Printf("(Running)  Started: %s, Dur: %s\n", 
 			           TimeStr(run.TimeStarted()), 
-			           run.RunDuration())
+			           DurationStr(run.RunDuration()))
 		} else {
 			fmt.Printf("(Finished) Started: %s, Ended: %s, Dur: %s\n", 
 			           TimeStr(run.TimeStarted()), 
-			           TimeStr(run.TimeEnded()), run.RunDuration())
+			           TimeStr(run.TimeEnded()), 
+			           DurationStr(run.RunDuration()))
 		}
 	}
 	return RunSuccess

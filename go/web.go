@@ -49,10 +49,12 @@ type ( //Ajax requests
 type ( //View models
 	RunModel struct {
 		IsRunning bool
-		Status    string
-		StartTime string
-		EndTime   string
-		Duration  string
+		Status     string
+		StartTime  string
+		EndTime    string
+		Duration   string
+		ButtonText string
+		ButtonLink string
 	}
 )
 
@@ -184,20 +186,26 @@ func (ws *WebServer) AjaxHist(arg string) (ret string, rerr error) {
 
 
 func RunsListToModels(runslist []TempestRunner) []RunModel {
+	//TODO: Should I make consts for some of these URLS?
 	ret := make([]RunModel, 0)
 	for _, run := range(runslist) {
 		et := TimeStr(run.TimeEnded())
 		stat := "Finsihed"
+		link := fmt.Sprintf("/runs/%s", TempestEncodeTime(run.TimeEnded()))
 		if run.IsRunning() {
 			et = "-"
 			stat = "Running"
+			link = "/"
 		}
 		mdl := RunModel {
 			IsRunning: run.IsRunning(),
 			Status: stat,
 			StartTime: TimeStr(run.TimeStarted()),
 			EndTime: et,
-			Duration: run.RunDuration().String(),
+			Duration: DurationStr(run.RunDuration()),
+			ButtonText: "View",
+			ButtonLink: link,
+
 		}
 		ret = append(ret, mdl)
 	}

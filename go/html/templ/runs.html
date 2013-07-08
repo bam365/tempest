@@ -12,11 +12,14 @@
 			<div class="runduration-heading">Duration</div>
 	</div>
 	{{range .}}
-		<div class="runbox">
+		<div class={{if .IsRunning}}"runbox-running"{{else}}"runbox"{{end}}>
 			<div class="runstat">{{.Status}}</div>
 			<div class="runbegin">{{.StartTime}}</div>
 			<div class="runend">{{.EndTime}}</div>
 			<div class="runduration">{{.Duration}}</div>
+			<div class="runview">
+				<a class="runviewlink" href={{.ButtonLink}}>{{.ButtonText}}</a>
+			</div>
 		</div>
 	{{end}}
 </body>

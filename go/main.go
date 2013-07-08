@@ -67,6 +67,16 @@ func TimeStr(t time.Time) string {
 	return t.Format("1/2/2006 3:04:05pm")
 }
 
+
+func DurationStr(d time.Duration) string {
+	tmp := int(d.Seconds())
+	h := tmp / (60*60)
+	tmp = tmp % (60*60) 
+	m, s := tmp / 60, tmp % 60
+	return fmt.Sprintf("%dh%dm%ds", h, m, s) 
+}
+
+
 func GetEmailPassword(conf config.TempestConf) string {
         ret := ""
         if conf.ShouldEmail() {
