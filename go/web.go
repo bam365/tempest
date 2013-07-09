@@ -78,6 +78,7 @@ func NewWebServer(td *TempestData) *WebServer {
         ws.AjaxMappings = map[string]AjaxHandler {
                 "readings": ws.AjaxReadings,
                 "hist":     ws.AjaxHist,
+                "sensors":  ws.AjaxSensors,
         }
 
         http.Handle("/", ws.SetupUrlRouter())
@@ -182,6 +183,12 @@ func (ws *WebServer) AjaxHist(arg string) (ret string, rerr error) {
                 }
         }
         return
+}
+
+
+func (ws *WebServer) AjaxSensors(arg string) (ret string, rerr error) {
+	sensors := ws.TData.Conf.Sensors
+        return JsonStr(sensors), nil
 }
 
 
