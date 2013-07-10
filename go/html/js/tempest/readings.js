@@ -9,7 +9,7 @@ define(
 	"dojo/domReady!"
 ], function(dom, domCons, request) {
 
-	var readingsTag = dom.byId("readings");
+	var readingsTag = dom.byId("boxReadings");
 	var indicators = {};
 
 
@@ -49,43 +49,55 @@ define(
 	var setReadings = function(rdgs) {
 		for (var rdg in rdgs) {
 			var val = rdgs[rdg].data;
+			var err = rdgs[rdg].error;
+			var rdgtxt = dom.byId(readingTextID(rdg));
 			if (indicators.hasOwnProperty(rdg)) {
 				indicators[rdg].update(val);
 			}
-	                //TODO: Make sure this node actually exists
-	                var rdgtxt = dom.byId(readingTextID(rdg));
-	                rdgtxt.innerHTML = val.toString();
-	                //TODO: Check error value
-	        }
+			rdgtxt.innerHTML = val.toString();
+			//TODO: Check error value
+		}
+	};
+
+	var calcTickIntervals = function(ginfo) {
+		var range = ginfo.range.hi - ginfo.range.lo;
+		var roughMajor = range / 15;
+		var roundedMajor = Math.ceil(roughMajor / 5) * 5;
+		return {
+			major: roundedMajor,
+			minor: roundedMajor / 3.0
+		};
 	};
 
 
-	var makeGauge = function(parent, name, ginfo) {
-		indicators[name] = new dojox.gauges.AnalogArrowIndicator({
-			value: 17, 
-			width: 3,
-			title: 'Reading',
-			noChange: true,
-			hideValue: true
-		});
-		var alertIndicators = [ 
-			new dojox.gauges.AnalogLineIndicator({
+	var makeAlertIndicators = function(ginfo) {
+		ret = [];
+		if (ginfo.alert.hasOwnProperty("lo") && ginfo.alert.lo > ginfo.range.lo) {
+			ret.push(new dojox.gauges.AnalogLineIndicator({
 				value: ginfo.alert.lo,
 				color: "#CC0000",
 				width: 2,
 				title: 'Low alert',
 				noChange: true,
 				hideValue: true
-			}),
-			new dojox.gauges.AnalogLineIndicator({
+			}));
+		}
+		if (ginfo.alert.hasOwnProperty("hi") && ginfo.alert.hi < ginfo.range.hi) {
+			ret.push(new dojox.gauges.AnalogLineIndicator({
 				value: ginfo.alert.hi,
 				color: "#CC0000",
 				width: 2,
-				title: 'High alert',
+				title: 'Low alert',
 				noChange: true,
 				hideValue: true
-			})
-		];
+			}));
+		}
+		return ret;
+	};
+
+
+	var makeGauge = function(parent, name, ginfo) {
+		tickIntervals = calcTickIntervals(ginfo);
 		var g = new dojox.gauges.AnalogGauge({
 			background: [255, 255, 255, 0],
 			id: gaugeID(name),
@@ -98,11 +110,17 @@ define(
 			ranges: [ {low: ginfo.range.lo, high: ginfo.range.hi } ],
 			majorTicks: {
 				offset: 125,
-				interval: 10,
+				interval: tickIntervals.major,
 				length: 5,
 				color: 'gray'
 			},
-			indicators: alertIndicators,
+			minorTicks: {
+				offset: 125,
+				interval: tickIntervals.minor,
+				length: 3,
+				color: 'gray'
+			},
+			indicators: makeAlertIndicators(ginfo),
 			hideValue: true
 		}, parent);
                 g.startup();
@@ -130,9 +148,9 @@ define(
 				updateReadings();
 			},
 			function(error) {
-                        //TODO: Should probably do something
-                        //here...
-                });
+				//TODO: Should probably do something
+				//here...
+			});
 		},
 
 		updateReadings: function() {
@@ -142,9 +160,9 @@ define(
 				setReadings(rdgs);
 			},
 			function(error) {
-                        //TODO: Should probably do something
-                        //here...
-                });
+				//TODO: Should probably do something
+				//here...
+			});
 		}
 	};
 });

@@ -46,6 +46,14 @@ type ( //Ajax requests
 )
 
 
+type ( //Ajax responses
+	ARRunInfo struct {
+		RunStart    string  `json:"runstart"`
+		RunDuration string  `json:"duration"`
+	}
+)
+
+
 type ( //View models
 	RunModel struct {
 		IsRunning bool
@@ -79,6 +87,7 @@ func NewWebServer(td *TempestData) *WebServer {
                 "readings": ws.AjaxReadings,
                 "hist":     ws.AjaxHist,
                 "sensors":  ws.AjaxSensors,
+                "runinfo":  ws.AjaxRunInfo,
         }
 
         http.Handle("/", ws.SetupUrlRouter())
@@ -189,6 +198,16 @@ func (ws *WebServer) AjaxHist(arg string) (ret string, rerr error) {
 func (ws *WebServer) AjaxSensors(arg string) (ret string, rerr error) {
 	sensors := ws.TData.Conf.Sensors
         return JsonStr(sensors), nil
+}
+
+
+func (ws *WebServer) AjaxRunInfo(arg string) (ret string, rerr error) {
+	curr_run := ws.TData.Run;
+	runinf := ARRunInfo {
+		RunStart: TimeStr(curr_run.TimeStarted()),
+		RunDuration: DurationStr(curr_run.RunDuration()),
+	}
+	return JsonStr(runinf), nil
 }
 
 

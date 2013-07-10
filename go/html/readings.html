@@ -1,43 +1,53 @@
 <html>
-        <head>
-                <title>Tempest - readings</title>
+<head>
+	<title>Tempest - readings</title>
 
-                <link rel="stylesheet" type="text/css" href="/stylesheets/site.css" />
-                <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/dojo/1.9.1/dijit/themes/claro/claro.css" media="screen" />
-                <script>
-                        var dojoConfig = {
-                                has: {
-                                        "dojo-firebug": true
-                                },
-                                parseOnLoad: true,
-                                baseUrl: "/js",
-                                packages: [{
-                                        name: "tempest",
-                                        location: location.pathname.replace(/\/[^/]*$/, '')
-                                }],
-                                debugAtAllCosts: true,
-                                async: true
-                        };
-                </script>
-                <script src="//ajax.googleapis.com/ajax/libs/dojo/1.9.0/dojo/dojo.js"></script>
+	<link rel="stylesheet" type="text/css" href="/stylesheets/site.css" />
+	<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/dojo/1.9.1/dijit/themes/claro/claro.css" media="screen" />
+	<script>
+	var dojoConfig = {
+		has: {
+			"dojo-firebug": true
+		},
+		parseOnLoad: true,
+		baseUrl: "/js",
+		packages: [{
+			name: "tempest",
+			location: location.pathname.replace(/\/[^/]*$/, '')
+		}],
+		debugAtAllCosts: true,
+		async: true
+	};
+	</script>
+	<script src="//ajax.googleapis.com/ajax/libs/dojo/1.9.0/dojo/dojo.js"></script>
 
-                <script>
-                        var tick = function() {
-                                require(["tempest/readings"], function(readings) {
-                                        readings.updateReadings();
-                                });
-                        };
-                        require(["tempest/readings"], function(readings) {
-	                        readings.setupReadings();
-	                });
-                        tick();
-	                setInterval(tick, 15000); 
-                </script>
-        </head>
+	<script>
+	var tick = function() {
+		require(["tempest/readings"], function(readings) {
+			readings.updateReadings();
+		});
+		require(["tempest/runinfo"], function(runinfo) {
+			runinfo.updateInfo();
+		});
+
+	};
+	require(["tempest/readings"], function(readings) {
+		readings.setupReadings();
+	});
+	tick();
+	setInterval(tick, 15000); 
+	</script>
+</head>
 
 
-        <body class="claro">
-                <h3>Sensor readings</h3>
-                <div id="readings"> </div>
-        </body>
+<body class="claro">
+	<div id="boxRunInfo">
+		<h2>Run Info</h2>
+		<h3 id="hdrRunStart">Run started: <span id="txtRunStart" /></h3>
+		<h3 id="hdrRunDuration">Run duration: <span id="txtRunDuration" /></h3>
+	</div>
+	<div id="boxReadings">
+		<h2>Sensor readings</h2>
+	</div>
+</body>
 </html>
