@@ -60,6 +60,17 @@ body {
 
 }
 
+.readingGroup, .sensorName, .sensorReading {
+	width: 350px;
+	text-align: center;
+}
 
+.sensorName, .sensorReading {
+	margin: 0 0 0 0;
+}
 
+.readingGroup {
+	float: left;
+	margin: 10px 0 0 0;
+}
 

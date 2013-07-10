@@ -33,12 +33,12 @@ define(
 		}, ul);
 		domCons.create("h3", {
 			className: "sensorName",
-			innerHTML: name + ": "
+			innerHTML: name 
 		}, lnode);
 		var gnode = domCons.create("div", {
 			id: gaugeID(name)
 		}, lnode);
-		domCons.create("h3", {
+		domCons.create("h4", {
 			id: readingTextID(name),
 			className: "sensorReading",
 			innerHTML: "17"
@@ -89,9 +89,9 @@ define(
 		var g = new dojox.gauges.AnalogGauge({
 			background: [255, 255, 255, 0],
 			id: gaugeID(name),
-			width: 300,
-			height: 150,
-			cy: 140,
+			width: 350,
+			height: 175,
+			cy: 160,
 			radius: 125,
 			min: ginfo.range.lo,
 			max: ginfo.range.hi,
@@ -105,8 +105,16 @@ define(
 			indicators: alertIndicators,
 			hideValue: true
 		}, parent);
-		g.addIndicator(indicators[name]);
-		g.startup();
+                g.startup();
+                var arrow = new dojox.gauges.AnalogArrowIndicator({
+                        value: 17, 
+                        width: 3,
+                        title: 'Reading',
+                        noChange: false,
+                        hideValue: true
+                });
+		g.addIndicator(arrow);
+                indicators[name] = arrow;
 		return g;
 	};
 
