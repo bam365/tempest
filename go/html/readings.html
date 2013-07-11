@@ -34,6 +34,9 @@
 	require(["tempest/readings"], function(readings) {
 		readings.setupReadings();
 	});
+	require(["tempest/hist"], function(hist) {
+			hist.updateChart();
+	});
 	tick();
 	setInterval(tick, 15000); 
 	</script>
@@ -46,6 +49,10 @@
 		<h3 id="hdrRunDuration">Run duration: <span id="txtRunDuration" /></h3>
 	</div>
 	<div id="boxReadings">
+	</div>
+	<div id="boxHistChart">
+		<div id="chartNode"></div>
+		<div id="legendNode"></div>
 	</div>
 </body>
 </html>
