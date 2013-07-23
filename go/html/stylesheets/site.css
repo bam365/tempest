@@ -1,0 +1,90 @@
+body {
+	width: 850px;
+	margin-left: auto;
+	margin-right: auto;
+	font-family: "Ariel", "sans-serif";
+}
+
+.runbox, .runbox-running {
+	margin: 2px 0px 2px 0px;
+	width: 100%;
+	overflow: auto;
+}
+
+.runbox {
+	background-color: #e3e37d;
+
+}
+
+.runbox-running, #boxRunInfo {
+	background-color: #7aff69;
+}
+
+
+.runstat-heading, .runbegin-heading, .runend-heading, .runduration-heading {
+	font-weight: bold;
+}
+
+.runstat, .runbegin, .runend, .runduration, .runview,
+	.runstat-heading, .runbegin-heading, .runend-heading, .runduration-heading {
+	float: left;
+	margin: 2px 2px 2px 2px;
+	padding: 5px 5px 5px 5px;
+}
+
+.runstat-heading, .runstat {
+	width: 10%;
+}
+
+.runbegin-heading, .runbegin {
+	width: 30%;
+}
+
+.runend-heading, .runend {
+	width: 30%;
+}
+
+.runduration-heading, .runduration {
+	width: 10%;
+}
+
+.runview {
+	width: 10%;
+	text-align: center;
+}
+
+
+.runviewlink {
+	margin: auto;
+	display: block;	
+
+}
+
+.readingGroup, .sensorName, .sensorReading {
+	width: 350px;
+	text-align: center;
+}
+
+.sensorName, .sensorReading {
+	margin: 0 0 0 0;
+}
+
+.readingGroup {
+	float: left;
+	margin: 30px 0 0 0;
+}
+
+
+#boxRunInfo, #boxReadings, #boxHistChart {
+	padding: 5px 5px 5px 5px;
+	margin: 10 0 10px 0;
+	border: 1px solid black;
+	background-color: white;
+	border-radius: 5px;
+	overflow: auto;
+}
+
+#boxRunInfo>h2, #boxReadings>h2 {
+	text-align: center;
+	font-variant: underline;
+}

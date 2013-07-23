@@ -1,0 +1,26 @@
+<html>
+<head>
+	<title>Tempest - runs</title>
+	<link rel="stylesheet" type="text/css" href="/stylesheets/site.css" />
+</head>
+<body>
+	<h2>Run history</h2>
+	<div class="runbox-heading">
+			<div class="runstat-heading">Status</div>
+			<div class="runbegin-heading">Started</div>
+			<div class="runend-heading">Ended</div>
+			<div class="runduration-heading">Duration</div>
+	</div>
+	{{range .}}
+		<div class={{if .IsRunning}}"runbox-running"{{else}}"runbox"{{end}}>
+			<div class="runstat">{{.Status}}</div>
+			<div class="runbegin">{{.StartTime}}</div>
+			<div class="runend">{{.EndTime}}</div>
+			<div class="runduration">{{.Duration}}</div>
+			<div class="runview">
+				<a class="runviewlink" href={{.ButtonLink}}>{{.ButtonText}}</a>
+			</div>
+		</div>
+	{{end}}
+</body>
+</html>

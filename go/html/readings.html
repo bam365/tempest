@@ -1,0 +1,58 @@
+<html>
+<head>
+	<title>Tempest - readings</title>
+
+	<link rel="stylesheet" type="text/css" href="/stylesheets/site.css" />
+	<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/dojo/1.9.1/dijit/themes/claro/claro.css" media="screen" />
+	<script>
+	var dojoConfig = {
+		has: {
+			"dojo-firebug": true
+		},
+		parseOnLoad: true,
+		baseUrl: "/js",
+		packages: [{
+			name: "tempest",
+			location: location.pathname.replace(/\/[^/]*$/, '')
+		}],
+		debugAtAllCosts: true,
+		async: true
+	};
+	</script>
+	<script src="//ajax.googleapis.com/ajax/libs/dojo/1.9.0/dojo/dojo.js"></script>
+
+	<script>
+	var tick = function() {
+		require(["tempest/readings"], function(readings) {
+			readings.updateReadings();
+		});
+		require(["tempest/runinfo"], function(runinfo) {
+			runinfo.updateInfo();
+		});
+
+	};
+	require(["tempest/readings"], function(readings) {
+		readings.setupReadings();
+	});
+	require(["tempest/hist"], function(hist) {
+			hist.updateChart();
+	});
+	tick();
+	setInterval(tick, 15000); 
+	</script>
+</head>
+
+
+<body class="claro">
+	<div id="boxRunInfo">
+		<h3 id="hdrRunStart">Run started: <span id="txtRunStart" /></h3>
+		<h3 id="hdrRunDuration">Run duration: <span id="txtRunDuration" /></h3>
+	</div>
+	<div id="boxReadings">
+	</div>
+	<div id="boxHistChart">
+		<div id="chartNode"></div>
+		<div id="legendNode"></div>
+	</div>
+</body>
+</html>

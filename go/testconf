@@ -12,5 +12,13 @@
                 }
         },
         "alertdelay": 5,
-        "histdelay": 5 
+        "histdelay": 5,
+        "smtp": {
+                "server": "smtp.gmail.com",
+                "port": 587,
+                "user":   "blah@blah.com",
+                "auth":   "tls"
+        },
+        "emails": ["foo@bar.com"],
+        "port": 8080
 }
