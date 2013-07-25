@@ -1,0 +1,29 @@
+{
+        "sensors": {
+                "Sensor 1": { 
+                        "file": "s1.dat",
+                        "range": {"lo": 0, "hi": 240},
+                        "alert": {"lo": 0, "hi": 235}
+                },
+                "Sensor 2": {
+                        "file": "col.dat",
+                        "range": {"lo": 0, "hi": 230},
+                        "alert": {"lo": 0, "hi": 195}
+                },
+                "Sensor 3": {
+                        "file": "wat.dat",
+                        "range": {"lo": 0, "hi": 180},
+                        "alert": {"lo": 0, "hi": 120}
+                }
+        },
+        "delay": 5,
+        "alertdelay": 300,
+        "smtp": {
+                "server": "smtp.gmail.com",
+                "port": 587,
+                "user":   "blah@blah.com",
+                "auth":   "tls"
+        },
+        "emails": ["foo@bar.com"],
+        "port": 8080
+}

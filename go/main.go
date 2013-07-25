@@ -22,6 +22,11 @@ import (
 )
 
 
+const (
+	ConfigFile = "tempest.conf"
+)
+
+
 type TempestData struct {
         Conf *config.TempestConf
         Run *CurrentTempestRun
@@ -36,7 +41,7 @@ type TempestData struct {
 
 func main() {
         td := new(TempestData)
-        if conf, err := config.LoadConf("testconf"); err != nil {
+        if conf, err := config.LoadConf(ConfigFile); err != nil {
                 fmt.Printf("Error loading conf: %s\n", err)
         } else {
                 fmt.Println("Loaded conf")

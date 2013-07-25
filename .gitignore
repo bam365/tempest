@@ -26,3 +26,4 @@ _testmain.go
 
 #Tempest stuff
 *.csv
+go/tempest.conf

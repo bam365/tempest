@@ -279,7 +279,7 @@ func (tr *CurrentTempestRun) alerterProc() {
 
 
 func (tr *CurrentTempestRun) histRecorderProc() {
-        tmr := intervalTicker(tr.Conf.HistInterval)
+        tmr := intervalTicker(tr.Conf.Delay)
         writerec := func (t int) { 
                 readings := sensors.ReadSensors(tr.Conf.Sensors)
                 if err := tr.History.Write(readings.ToCSVRecord(t)); err != nil {

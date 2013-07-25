@@ -38,8 +38,8 @@ type (
                 Sensors SensorConf `json:"sensors"`
                 Smtp SmtpSettings  `json:"smtp"`
                 Emails []string    `json:"emails"`
+                Delay int          `json:"delay"`
                 AlertInterval int  `json:"alertdelay"`
-                HistInterval int   `json:"histdelay"`
                 Port int           `json:"port"`
         }
 )
@@ -49,8 +49,8 @@ func NewTempestConf() TempestConf {
         return TempestConf { 
                 Sensors: make(map[string]SensorData), 
                 Emails: make([]string, 0),
-                AlertInterval: 60,
-                HistInterval: 60,
+                Delay: 5,
+                AlertInterval: 300,
                 Port: 8080,
         }
 }
