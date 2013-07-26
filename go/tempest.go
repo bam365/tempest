@@ -52,6 +52,7 @@ type (
         CurrentTempestRun struct {
                 TempestRun
                 Conf     config.TempestConf
+                lastAlert map[string]time.Time
                 stop     chan bool 
                 err      chan string
                 alert    chan string
@@ -167,7 +168,7 @@ func (tr TempestRun) Hist() *HistFile {
         return &(tr.History)
 }
 
-        
+
 // CurrentTempestRun stuff
 
 func newCurrentTempestRun(td *TempestData) *CurrentTempestRun {
@@ -260,7 +261,9 @@ func (tr *CurrentTempestRun) alerterProc() {
         checkalerts := func() {
                 for sname, sdat := range(sensors.ReadSensors(tr.Conf.Sensors)) {
                         if amsg := alertmsg(tr.Conf.Sensors[sname].Alert, sdat); amsg != "" {
-                                tr.alert <- fmt.Sprintf("Sensor %s: %s", sname, amsg )
+                                if tr.shouldAlert(sname) {
+                                        tr.alert <- fmt.Sprintf("Sensor %s: %s", sname, amsg )
+                                }
                         }
                 }
         }
@@ -301,6 +304,16 @@ func (tr *CurrentTempestRun) histRecorderProc() {
                         record(now) 
                 }
         }
+}
+
+
+func (tr *CurrentTempestRun) shouldAlert(sensor string) bool {
+        ret := true
+        alertDelay := time.Duration(tr.Conf.AlertInterval) * time.Second
+        if tlast, found := tr.lastAlert[sensor]; found {
+                ret = time.Now().After(tlast.Add(alertDelay))
+        }
+        return ret
 }
 
 
