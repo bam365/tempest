@@ -78,10 +78,10 @@ func NewWebServer(td *TempestData) *WebServer {
 	ws.AjaxMappings = map[string]AjaxHandler{
 		//Make sure you use the AjaxOnRun handler factory if the ajax call
 		//depends on a run being in progress
-		"readings": ws.AjaxOnRun(ws.AjaxReadings),
-		"hist":     ws.AjaxOnRun(ws.AjaxHist),
+		"readings": AjaxOnRun(ws.AjaxReadings),
+		"hist":     AjaxOnRun(ws.AjaxHist),
 		"sensors":  ws.AjaxSensors,
-		"runinfo":  ws.AjaxOnRun(ws.AjaxRunInfo),
+		"runinfo":  AjaxOnRun(ws.AjaxRunInfo),
 	}
 
 	http.Handle("/", ws.SetupUrlRouter())
@@ -134,17 +134,14 @@ func ParseRequestBody(r *http.Request) (string, error) {
 	return ret, rerr
 }
 
-func (ws *WebServer) AjaxOnRun(hdlr AjaxHandler) AjaxHandler {
-	var ret AjaxHandler
-	run := ws.TData.Run
-	if ws.TData.Running && run != nil {
-		ret = hdlr
-	} else {
-		ret = func(_ string) (string, error) {
-			return "", nil
-		}
-	}
-	return ret
+func AjaxOnRun(hdlr AjaxHandler) AjaxHandler {
+        return func(arg string) (ret string, rerr error) {
+                ret, rerr = "", nil
+        	if IsRunInProgress() {
+        		ret, rerr = hdlr(arg)
+        	}
+                return
+        }
 }
 
 func (ws *WebServer) HandleAjax(w http.ResponseWriter, r *http.Request) {
