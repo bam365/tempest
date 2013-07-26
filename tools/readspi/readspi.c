@@ -19,22 +19,40 @@ void prep_for_read(uint8_t adc);
 int read_channel(uint8_t adc);
 
 
-int main()
+int main(int argc, char **argv)
 {
+	int chan;
+
 	if (!bcm2835_init())
 		return -1;	
 
+	if ((chan = get_channel(argc, argv)) < 0) {
+		fprintf(stderr, "Invalid channel argument\n");
+		return -1;
+	}
+
 	setup_pins();
 	bcm2835_delay(50);
-	while (1) {
-		printf("%d\n", read_channel(0));
-		sleep(1);
-	}
+	printf("%d\n", read_channel((uint8_t)chan));
+
 
 	return 0;
 }
-	
 
+
+int get_channel(int argc, char **argv)
+{
+	int ret = -1, buf;
+
+	if (argc > 1) 
+	if (sscanf(argv[1], "%d", &buf) == 1) 
+	if (buf >= 0 && buf <= 7)
+		ret = buf;
+	
+	return ret;
+}	
+		
+		
 void setup_pins()
 {
 	bcm2835_gpio_fsel(PIN_CLK, BCM2835_GPIO_FSEL_OUTP);
