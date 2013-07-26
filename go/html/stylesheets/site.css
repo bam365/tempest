@@ -74,6 +74,11 @@ body {
 	margin: 30px 0 0 0;
 }
 
+.readingTxtError {
+	color: red;
+	font-weight: bold;
+}
+
 
 #boxRunInfo, #boxReadings, #boxHistChart {
 	padding: 5px 5px 5px 5px;
@@ -88,3 +93,5 @@ body {
 	text-align: center;
 	font-variant: underline;
 }
+
+

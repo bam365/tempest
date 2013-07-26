@@ -12,6 +12,9 @@ define(
 	var readingsTag = dom.byId("boxReadings");
 	var indicators = {};
 
+	var rdgGroupClass = "readingGroup";
+	var rdgTxtClass = "sensorReading";
+	var errClass = "readingTxtError";
 
 	var gaugeID = function(name) {
 		return name + "-gauge";
@@ -29,7 +32,7 @@ define(
 	var addSensor = function(name, sinfo, ul) {
 		var lnode = domCons.create("div", {
 			id: readingGroupID(name),
-			className: "readingGroup"
+			className: rdgGroupClass
 		}, ul);
 		domCons.create("h3", {
 			className: "sensorName",
@@ -40,7 +43,7 @@ define(
 		}, lnode);
 		domCons.create("h4", {
 			id: readingTextID(name),
-			className: "sensorReading",
+			className: rdgTxtClass,
 			innerHTML: "17"
 		}, lnode);
 		makeGauge(gnode, name, sinfo);
@@ -49,13 +52,20 @@ define(
 	var setReadings = function(rdgs) {
 		for (var rdg in rdgs) {
 			var val = rdgs[rdg].data;
-			var err = rdgs[rdg].error;
+			var err = rdgs[rdg].err;
 			var rdgtxt = dom.byId(readingTextID(rdg));
-			if (indicators.hasOwnProperty(rdg)) {
+			var rdghdr = dom.byId(readingGroupID(rdg));
+			if (err !== "") {
+				rdgtxt.innerHTML = err;
+				rdgtxt.className = errClass;
+				dom.byId(readingGroupID(rdg)).className = errClass; 
+			} else {
+				rdgtxt.className = rdgTxtClass;
+				rdghdr.className = rdgGroupClass;
 				indicators[rdg].update(val);
+				rdgtxt.innerHTML = val.toString();
 			}
-			rdgtxt.innerHTML = val.toString();
-			//TODO: Check error value
+
 		}
 	};
 
