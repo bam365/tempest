@@ -1,0 +1,2 @@
+To build this program, you need to build and install Mike McCauley's bcm2835 C lib (google it) and install it to /usr/local
+Then just run make
