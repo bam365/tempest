@@ -56,7 +56,6 @@ func main() {
                 //This is going to take some doing.
                 go ws.Run()
                 fmt.Println("DONE")
-                td.Running = true
                 RunConsole(td)
         }
 }
@@ -97,6 +96,7 @@ func GetEmailPassword(conf config.TempestConf) string {
 
 
 func TryResumeRun(td *TempestData) {
+        td.Running = false;
         if IsRunInProgress() {
                 if r, rerr := ResumeCurrentTempestRun(td); rerr != nil {
                         fmt.Printf("Run error: %s\n", rerr.Error())
@@ -104,6 +104,7 @@ func TryResumeRun(td *TempestData) {
                         td.Run = r
                         fmt.Print("Continuing run started on ")
                         fmt.Println(TimeStr(td.Run.TimeStarted()))
+                        td.Running = true;
                 }
         } else {
                 fmt.Println("No run is in progress");
