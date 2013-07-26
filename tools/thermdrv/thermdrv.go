@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"math"
 	"time"
+	"strings"
 )
 
 
@@ -75,7 +76,7 @@ func LoadConfig(fname string) (Config, error) {
 
 func (t Thermistor) CalcThermResistance(rdg int) float32 {
 	V_in := MCP3008Ticks
-	V_ratio := float32(V_in / rdg)
+	V_ratio := float32(V_in) / float32(rdg)
 	return (t.R * V_ratio - t.R)
 }
 
@@ -95,7 +96,8 @@ func (t Thermistor) GetRawReading(conf Config) (int, error) {
 	rdg, rerr := -1, error(nil)
 	buf, err := exec.Command(conf.ReadSpi, strconv.Itoa(int(t.Channel))).Output()
 	if err == nil {
-		if n, cerr := strconv.Atoi(string(buf)); cerr == nil {
+		instr := strings.Trim(string(buf), " \n\t\r")
+		if n, cerr := strconv.Atoi(instr); cerr == nil {
 			rdg = n
 		}
 	} else {
@@ -132,11 +134,13 @@ func Round(n float32) int {
 
 
 func UpdateFile(fname string, rdg int) error {
-	f, err := os.OpenFile(fname, os.O_TRUNC | os.O_CREATE | os.O_RDONLY, 0666)
+	f, err := os.OpenFile(fname, os.O_TRUNC | os.O_CREATE | os.O_WRONLY, 0666)
 	if err == nil {
 		fmt.Fprintf(f, "%d\n", rdg)
 		f.Close()
-	} 
+	} else {
+		ReportError(err)
+	}
 	return err
 }
 
