@@ -27,3 +27,5 @@ _testmain.go
 #Tempest stuff
 *.csv
 go/tempest.conf
+go/tempest
+*.sublime-workspace
