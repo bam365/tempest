@@ -23,6 +23,14 @@ const (
 	RunsTemplateFile = "html/templ/runs.html"
 )
 
+const (
+	SensorsUrl = "/sensors"
+	ReadingsUrl = "/readings"
+	HistUrl = "/hist"
+	RunsUrl = "/runs"
+)
+
+
 type (
 	PageHandler func(http.ResponseWriter, *http.Request)
 	AjaxHandler func(string) (string, error)
@@ -65,14 +73,15 @@ func NewWebServer(td *TempestData) *WebServer {
 
 	ws.TData = td
 	ws.URLMappings = map[string]PageHandler{
-		"/sensors":           StaticFileServer(SensorFile),
-		"/readings":          StaticFileServer(ReadingsFile),
-		"/hist":              StaticFileServer(WebHistFile),
+		"/":                  ws.RootHandler,
+		SensorsUrl:           StaticFileServer(SensorFile),
+		ReadingsUrl:          StaticFileServer(ReadingsFile),
+		HistUrl:              StaticFileServer(WebHistFile),
 		"/ajax/{request}":    ws.HandleAjax,
 		"/js/tempest/{file}": StaticFileServerFromVar("file", "html/js/tempest"),
 		"/stylesheets/{file}": StaticFileServerFromVar("file",
 			"html/stylesheets"),
-		"/runs": ws.RunsHandler,
+		RunsUrl: ws.RunsHandler,
 	}
 
 	ws.AjaxMappings = map[string]AjaxHandler{
@@ -143,6 +152,16 @@ func AjaxOnRun(hdlr AjaxHandler) AjaxHandler {
                 return
         }
 }
+
+
+func (ws *WebServer) RootHandler(w http.ResponseWriter, r *http.Request) {
+	if (IsRunInProgress()) {
+		http.Redirect(w, r, ReadingsUrl, http.StatusFound)
+	} else {
+		http.Redirect(w, r, RunsUrl, http.StatusFound)
+	}
+}
+
 
 func (ws *WebServer) HandleAjax(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)

@@ -51,11 +51,12 @@ type (
 
         CurrentTempestRun struct {
                 TempestRun
-                Conf     config.TempestConf
+                Conf      config.TempestConf
                 lastAlert map[string]time.Time
-                stop     chan bool 
-                err      chan string
-                alert    chan string
+                histstop  chan bool 
+                alertstop chan bool
+                err       chan string
+                alert     chan string
         }
 )
 
@@ -91,7 +92,7 @@ func TempestDecodeTime(t string) (time.Time, error) {
 
 
 func IsRunInProgress() bool {
-        _, err := os.Stat(CurrentRunHistFile)
+       _, err := os.Stat(CurrentRunHistFile)
         return (err == nil)
 }
 
@@ -177,7 +178,8 @@ func newCurrentTempestRun(td *TempestData) *CurrentTempestRun {
                         History: OpenHistFile(CurrentRunHistFile),
                 },
                 Conf: *td.Conf,
-                stop: make(chan bool),
+                histstop: make(chan bool),
+                alertstop: make(chan bool),
                 err: make(chan string),
                 alert: td.Alert,
         }
@@ -233,7 +235,8 @@ func (tr *CurrentTempestRun) StopRun() error {
         if (!tr.IsRunning()) {
                 return errors.New("Not running")
         }
-        tr.stop <- true
+        tr.histstop <- true
+        tr.alertstop <- true
         tr.EndTime = time.Now()
         fn, et := CurrentRunHistFile, tr.EndTime
         os.Rename(fn, fmt.Sprintf("%s%s-%s%s", RunHistDir, RunHistFileName,
@@ -270,7 +273,7 @@ func (tr *CurrentTempestRun) alerterProc() {
                                 
         for {
                 select {
-                case quit := <-tr.stop:
+                case quit := <-tr.alertstop:
                         if (quit) {
                                 return
                         }
@@ -296,7 +299,7 @@ func (tr *CurrentTempestRun) histRecorderProc() {
         record(time.Now())
         for {
                 select {
-                case quit := <-tr.stop:
+                case quit := <-tr.histstop:
                         if (quit) {
                                 return
                         }
