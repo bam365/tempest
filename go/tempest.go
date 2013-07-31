@@ -265,7 +265,7 @@ func (tr *CurrentTempestRun) alerterProc() {
                 for sname, sdat := range(sensors.ReadSensors(tr.Conf.Sensors)) {
                         if amsg := alertmsg(tr.Conf.Sensors[sname].Alert, sdat); amsg != "" {
                                 if tr.shouldAlert(sname) {
-                                        tr.alert <- fmt.Sprintf("Sensor %s: %s", sname, amsg )
+                                        tr.alert <- fmt.Sprintf("%s sensor - %s", sname, amsg )
                                 }
                         }
                 }
